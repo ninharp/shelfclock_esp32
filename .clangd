@@ -1,0 +1,8 @@
+CompileFlags:
+  CompilationDatabase: build
+  Remove:
+    - -fno-shrink-wrap
+    - -fstrict-volatile-bitfields
+    - -fno-tree-switch-conversion
+    - -march=rv32imc*
+    - -march=rv32imac*
