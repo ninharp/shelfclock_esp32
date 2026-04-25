@@ -1,14 +1,32 @@
 #pragma once
 #include <stdint.h>
+#include <stdbool.h>
+#include <time.h>
 
-void display_time_mode(void);
-void display_date_mode(void);
-void display_temperature_mode(void);
-void display_humidity_mode(void);
-void display_scoreboard_mode(void);
-void display_countdown_mode(void);
-void display_stopwatch_mode(void);
-void display_scroll_mode(void);
+// Countdown/Stopwatch timestamps (esp_timer_get_time() in µs)
+extern int64_t g_countdown_end_us;
+extern int64_t g_countup_start_us;
+extern int64_t g_countup_end_us;
 
-void mode_countdown_start(int32_t ms);
-void mode_stopwatch_start(int32_t ms);
+// Shared flags for color-change frequency (set/cleared in main_task)
+extern bool g_flag_min;
+extern bool g_flag_hour;
+extern bool g_flag_day;
+extern bool g_flag_week;
+extern bool g_flag_month;
+
+void mode_time_update(void);
+void mode_date_update(void);
+void mode_temperature_update(void);
+void mode_humidity_update(void);
+void mode_scoreboard_update(void);
+void mode_countdown_update(void);
+void mode_stopwatch_update(void);
+void mode_scroll_update(void);     // standalone scroll mode (clockMode==11)
+void mode_scroll_overlay(void);    // periodic overlay scroll
+
+void mode_countdown_start(int32_t duration_ms);
+void mode_stopwatch_start(int32_t duration_ms);
+
+void scroll(const char *text);     // directly callable from main_task (e.g. "MAkE A WISH")
+void end_countdown(void);
