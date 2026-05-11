@@ -2218,9 +2218,20 @@ function setDateTime() {
                     <button type="button" class="favorite ltgreylong-styled" onclick="setDateTime()">Update Date/Time</button>
 
                 </div>
-            </div>  
-            </div>  
+            </div>
+            </div>
 	</div>
+</div>
+
+<div class="row" style="margin: 10px 10px;">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <strong>System</strong><br><br>
+                <button type="button" class="favorite styled" style="background-color:#c0392b;color:white;" onclick="if(confirm('Gerät neu starten?')){$.post('/reboot');}">Neustart</button>
+            </div>
+        </div>
+    </div>
 </div>
 
 

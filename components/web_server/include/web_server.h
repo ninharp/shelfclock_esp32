@@ -13,6 +13,9 @@ void register_handlers_system(httpd_handle_t server);
 
 esp_err_t get_body_param(httpd_req_t *req, const char *key,
                          char *val, size_t val_len);
+esp_err_t get_body(httpd_req_t *req, char *buf, size_t buf_len);
+esp_err_t parse_body_param(const char *body, const char *key,
+                            char *val, size_t val_len);
 void      parse_hex_color(const char *hex, uint8_t *r, uint8_t *g, uint8_t *b);
 esp_err_t get_body_rgb(httpd_req_t *req, uint8_t *r, uint8_t *g, uint8_t *b);
 

@@ -225,6 +225,65 @@ void set_brightness(uint8_t brightness) {
     (void)brightness;
 }
 
+bool g_digit_anim_active = false;
+
+bool display_number_animated(uint8_t num, int digit_pos, crgb_t color,
+                              digit_anim_t *anim) {
+    /* Erste Initialisierung oder Zifferwechsel → Animation starten */
+    if (anim->to == 255) {
+        /* Noch nicht initialisiert: einblenden aus Schwarz */
+        anim->from  = 10;   /* Leer/Blank */
+        anim->to    = num;
+        anim->frame = 0;
+    } else if (num != anim->to) {
+        /* Ziffer hat sich geändert */
+        anim->from  = anim->to;
+        anim->to    = num;
+        anim->frame = 0;
+    }
+
+    if (anim->frame < 0) {
+        display_number(num, digit_pos, color);
+        return false;
+    }
+
+    /* Segmentmasken für alte und neue Ziffer */
+    uint8_t old_mask = (anim->from < 97) ? g_numbers[anim->from] : 0;
+    uint8_t new_mask = (anim->to   < 97) ? g_numbers[anim->to]   : 0;
+
+    /* Fortschritt 0→255 */
+    uint8_t t = (uint8_t)(255 * anim->frame / DIGIT_ANIM_FRAMES);
+
+    for (int s = 0; s < SEGMENTS_PER_NUMBER; s++) {
+        bool old_on = (old_mask >> s) & 1;
+        bool new_on = (new_mask >> s) & 1;
+
+        uint8_t scale;
+        if      ( old_on && !new_on) scale = 255 - t;  /* ausblenden */
+        else if (!old_on &&  new_on) scale = t;         /* einblenden */
+        else if ( new_on           ) scale = 255;        /* immer an   */
+        else                         scale = 0;          /* immer aus  */
+
+        crgb_t c = {
+            .r = (uint8_t)((uint16_t)color.r * scale / 255),
+            .g = (uint8_t)((uint16_t)color.g * scale / 255),
+            .b = (uint8_t)((uint16_t)color.b * scale / 255),
+        };
+
+        for (int led = 0; led < LEDS_PER_SEGMENT; led++) {
+            int fake_idx = (digit_pos * SEGMENTS_PER_NUMBER + s) * LEDS_PER_SEGMENT + led;
+            if (fake_idx >= (int)FAKE_NUM_LEDS) continue;
+            uint16_t real_idx = FAKE_LEDs[fake_idx];
+            if (real_idx < NUM_LEDS) g_leds[real_idx] = c;
+        }
+    }
+
+    anim->frame++;
+    if (anim->frame >= DIGIT_ANIM_FRAMES) anim->frame = -1;
+
+    return (anim->frame >= 0);
+}
+
 crgb_t color_wheel(int pos) {
     pos &= 0xFF;
     crgb_t c = {0, 0, 0};

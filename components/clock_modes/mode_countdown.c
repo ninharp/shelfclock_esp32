@@ -11,6 +11,7 @@
 
 int64_t g_countdown_end_us = 0;
 static int64_t s_duration_us = 0;
+static bool s_countdown_ended = false;
 
 void mode_countdown_start(int32_t duration_ms) {
     s_duration_us      = (int64_t)duration_ms * 1000;
@@ -48,10 +49,23 @@ void end_countdown(void) {
     storage_save_all();
 }
 
+bool mode_countdown_check_ended(void) {
+    if (s_countdown_ended) { s_countdown_ended = false; return true; }
+    return false;
+}
+
 void mode_countdown_update(void) {
     if (g_countdown_end_us == 0) return;
     int64_t now_us = esp_timer_get_time();
-    if (now_us >= g_countdown_end_us) { end_countdown(); return; }
+    if (now_us >= g_countdown_end_us) {
+        s_countdown_ended = true;
+        g_countdown_end_us = 0;
+        /* "End" auf dem Display anzeigen, kein Mutex-nötiger blocking call */
+        display_number(38, 5, CRGB_WHITE);  /* E */
+        display_number(79, 3, CRGB_WHITE);  /* n */
+        display_number(69, 1, CRGB_WHITE);  /* d */
+        return;
+    }
     int64_t rest_ms = (g_countdown_end_us - now_us) / 1000;
     uint32_t hours   = (uint32_t)((rest_ms / 1000) / 3600);
     uint32_t minutes = (uint32_t)((rest_ms / 1000) / 60);

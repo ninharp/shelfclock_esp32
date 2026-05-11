@@ -12,6 +12,7 @@
 
 #include "storage.h"
 #include "led_display.h"
+extern bool g_digit_anim_active;
 #include "sensors.h"
 #include "clock_modes.h"
 #include "lightshow.h"
@@ -207,6 +208,9 @@ static void main_task(void *arg) {
             all_blank();
             lightshow_dispatch();
             xSemaphoreGive(g_led_mutex);
+        } else if (mode == 11) {
+            /* Scroll verwaltet LED-Mutex intern – nicht von außen halten */
+            mode_scroll_update();
         } else if (mode != 9) {
             xSemaphoreTake(g_led_mutex, portMAX_DELAY);
             all_blank();
@@ -219,7 +223,6 @@ static void main_task(void *arg) {
                 case 7:  mode_date_update();        break;
                 case 8:  mode_humidity_update();    break;
                 case 10: /* display off */          break;
-                case 11: mode_scroll_update();      break;
                 default: break;
             }
             if (g_config.spotlight_anim_mode == 0) {
@@ -233,6 +236,11 @@ static void main_task(void *arg) {
             xSemaphoreTake(g_led_mutex, portMAX_DELAY);
             led_refresh();
             xSemaphoreGive(g_led_mutex);
+
+            /* Countdown-Ende außerhalb des LED-Mutex behandeln */
+            if (mode == 1 && mode_countdown_check_ended()) {
+                end_countdown();
+            }
         }
 
         /* Ziel-Framerate: animierte Modi ~30 fps, statische Modi ~5 fps */
@@ -242,6 +250,8 @@ static void main_task(void *arg) {
             case 4:  /* stopwatch  */
             case 5:  /* lightshow  */
                 target_ms = 33; break;
+            case 0:  /* uhr: schneller während Digit-Übergang */
+                target_ms = g_digit_anim_active ? 33 : 200; break;
             default:
                 target_ms = 200; break;
         }

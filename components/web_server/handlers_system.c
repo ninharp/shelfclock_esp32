@@ -3,6 +3,8 @@
 #include "sensors.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/semphr.h"
+#include "freertos/task.h"
+#include "esp_system.h"
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
@@ -84,6 +86,17 @@ static esp_err_t h_update_spot_anim(httpd_req_t *r) {
     xSemaphoreGive(g_config_mutex); storage_save_all(); SEND_OK(r);
 }
 
+static void reboot_task(void *arg) {
+    vTaskDelay(pdMS_TO_TICKS(500));
+    esp_restart();
+}
+
+static esp_err_t h_reboot(httpd_req_t *r) {
+    SEND_OK(r);
+    xTaskCreate(reboot_task, "reboot", 1024, NULL, 5, NULL);
+    return ESP_OK;
+}
+
 static esp_err_t h_debugpage(httpd_req_t *r) {
     char buf[1024];
     time_t now = time(NULL);
@@ -130,5 +143,6 @@ void register_handlers_system(httpd_handle_t s) {
     REG(s,HTTP_GET, "/getSpotAnimMode",              h_get_spot_anim);
     REG(s,HTTP_POST,"/setSpotBrightness",            h_update_spot_brightness);
     REG(s,HTTP_POST,"/setSpotAnimMode",              h_update_spot_anim);
+    REG(s,HTTP_POST,"/reboot",                        h_reboot);
     REG(s,HTTP_GET, "/debugpage",                    h_debugpage);
 }

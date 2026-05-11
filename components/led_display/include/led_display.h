@@ -45,6 +45,23 @@ extern const uint16_t FAKE_LEDs_C_RAIN[SEGMENTS_LEDS];
 extern const uint16_t FAKE_LEDs_SNAKE[SEGMENTS_LEDS];
 extern const uint8_t  g_numbers[97];
 
+/* ── Digit-Übergangsanimation ────────────────────────────────────────── */
+#define DIGIT_ANIM_FRAMES  10   /* ~10 × 33ms = 330ms pro Ziffer-Übergang */
+
+typedef struct {
+    uint8_t from;   /* vorheriger Wert (10=leer, 255=nicht initialisiert) */
+    uint8_t to;     /* Zielwert                                           */
+    int16_t frame;  /* -1=keine Animation, 0..DIGIT_ANIM_FRAMES-1=aktiv  */
+} digit_anim_t;
+
+#define DIGIT_ANIM_INIT { .from = 10, .to = 255, .frame = -1 }
+
+extern bool g_digit_anim_active;  /* true während mindestens ein Übergang läuft */
+
+/* Gibt true zurück wenn Animation noch läuft */
+bool display_number_animated(uint8_t num, int digit_pos, crgb_t color,
+                              digit_anim_t *anim);
+
 void led_display_init(void);
 void led_refresh(void);
 void all_blank(void);

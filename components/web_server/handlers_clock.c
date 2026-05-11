@@ -58,9 +58,11 @@ static esp_err_t h_go_scroll(httpd_req_t *r) {
     storage_save_all(); SEND_OK(r);
 }
 static esp_err_t h_go_scoreboard(httpd_req_t *r) {
+    char body[64]={0};
+    get_body(r, body, sizeof(body));
     char lbuf[8]={0}, rbuf[8]={0};
-    get_body_param(r, "left",  lbuf, sizeof(lbuf));
-    get_body_param(r, "right", rbuf, sizeof(rbuf));
+    parse_body_param(body, "left",  lbuf, sizeof(lbuf));
+    parse_body_param(body, "right", rbuf, sizeof(rbuf));
     xSemaphoreTake(g_config_mutex, portMAX_DELAY);
     g_config.scoreboard_left  = atoi(lbuf);
     g_config.scoreboard_right = atoi(rbuf);
@@ -129,14 +131,16 @@ static esp_err_t h_set_preset1(httpd_req_t *r) { storage_save_preset(1); SEND_OK
 static esp_err_t h_set_preset2(httpd_req_t *r) { storage_save_preset(2); SEND_OK(r); }
 
 static esp_err_t h_setdate(httpd_req_t *r) {
+    char body[128]={0};
+    get_body(r, body, sizeof(body));
     char year[8]={0}, month[4]={0}, day[4]={0};
     char hour[4]={0}, min[4]={0}, sec[4]={0};
-    get_body_param(r, "year",  year,  sizeof(year));
-    get_body_param(r, "month", month, sizeof(month));
-    get_body_param(r, "day",   day,   sizeof(day));
-    get_body_param(r, "hour",  hour,  sizeof(hour));
-    get_body_param(r, "min",   min,   sizeof(min));
-    get_body_param(r, "sec",   sec,   sizeof(sec));
+    parse_body_param(body, "year",  year,  sizeof(year));
+    parse_body_param(body, "month", month, sizeof(month));
+    parse_body_param(body, "day",   day,   sizeof(day));
+    parse_body_param(body, "hour",  hour,  sizeof(hour));
+    parse_body_param(body, "min",   min,   sizeof(min));
+    parse_body_param(body, "sec",   sec,   sizeof(sec));
     struct tm tm = {0};
     tm.tm_year = atoi(year) - 1900;
     tm.tm_mon  = atoi(month) - 1;
@@ -161,7 +165,7 @@ static esp_err_t h_get_color_mins(httpd_req_t *r)  { SEND_HEX(r,g_config.r[2],g_
 static esp_err_t h_get_color_colon(httpd_req_t *r) { SEND_HEX(r,g_config.r[3],g_config.g[3],g_config.b[3]); }
 
 static esp_err_t h_update_clock_display_type(httpd_req_t *r) {
-    char buf[8]={0}; get_body_param(r,"clockDisplayType",buf,sizeof(buf));
+    char buf[8]={0}; get_body_param(r,"ClockDisplayType",buf,sizeof(buf));
     xSemaphoreTake(g_config_mutex,portMAX_DELAY);
     g_config.clock_display_type=atoi(buf);
     xSemaphoreGive(g_config_mutex); storage_save_all(); SEND_OK(r);

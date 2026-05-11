@@ -2,6 +2,7 @@
 #include "storage.h"
 #include "led_display.h"
 #include "rtttl_player.h"
+extern bool g_digit_anim_active;
 #include "esp_timer.h"
 #include "esp_random.h"
 #include <time.h>
@@ -16,6 +17,11 @@ bool g_flag_month = false;
 
 static bool s_dots_on = true;
 static int  s_prev_sec = -1;
+
+static digit_anim_t s_anims[7] = {
+    DIGIT_ANIM_INIT, DIGIT_ANIM_INIT, DIGIT_ANIM_INIT, DIGIT_ANIM_INIT,
+    DIGIT_ANIM_INIT, DIGIT_ANIM_INIT, DIGIT_ANIM_INIT
+};
 
 static crgb_t pick_color(uint8_t cs, int ridx, bool flag) {
     (void)flag;
@@ -95,39 +101,38 @@ void mode_time_update(void) {
     uint8_t m1 = mins / 10,      m2 = mins % 10;
 
     // clockDisplayType: 0=center, 1=24h military, 2=space-padded, 3=blink-center
+    bool any_anim = false;
     if (g_config.clock_display_type == 1) {
-        // 24-hour: always show h1 (zero-pad)
-        display_number(h1 < 1 ? 0 : h1, 6, hc);
-        display_number(h2, 4, hc);
-        display_number(m1, 2, mc);
-        display_number(m2, 0, mc);
+        // 24-Stunden (zero-padded)
+        any_anim |= display_number_animated(h1 < 1 ? 0 : h1, 6, hc, &s_anims[6]);
+        any_anim |= display_number_animated(h2,                4, hc, &s_anims[4]);
+        any_anim |= display_number_animated(m1,                2, mc, &s_anims[2]);
+        any_anim |= display_number_animated(m2,                0, mc, &s_anims[0]);
     } else if (g_config.clock_display_type == 2) {
-        // Space-padded 12h
-        display_number(h1 < 1 ? 10 : h1, 6, hc);
-        display_number(h2, 4, hc);
-        display_number(m1, 2, mc);
-        display_number(m2, 0, mc);
+        // 12h space-padded
+        any_anim |= display_number_animated(h1 < 1 ? 10 : h1, 6, hc, &s_anims[6]);
+        any_anim |= display_number_animated(h2,                4, hc, &s_anims[4]);
+        any_anim |= display_number_animated(m1,                2, mc, &s_anims[2]);
+        any_anim |= display_number_animated(m2,                0, mc, &s_anims[0]);
     } else {
-        // 0 or 3: center-padded, optional blink
+        // 0 oder 3: zentriert, Stunden-Zehner über rohe Segmente
         if (h1 > 0) {
             crgb_t th = (cs == 4) ? random_color(g_config.pastel_colors) : hc;
-            for (int i = 32 * LEDS_PER_SEGMENT; i < 33 * LEDS_PER_SEGMENT; i++) {
+            for (int i = 32 * LEDS_PER_SEGMENT; i < 33 * LEDS_PER_SEGMENT; i++)
                 if (i < NUM_LEDS) g_leds[i] = th;
-            }
             th = (cs == 4) ? random_color(g_config.pastel_colors) : hc;
-            for (int i = 33 * LEDS_PER_SEGMENT; i < 34 * LEDS_PER_SEGMENT; i++) {
+            for (int i = 33 * LEDS_PER_SEGMENT; i < 34 * LEDS_PER_SEGMENT; i++)
                 if (i < NUM_LEDS) g_leds[i] = th;
-            }
         } else {
-            for (int i = 32 * LEDS_PER_SEGMENT; i < 34 * LEDS_PER_SEGMENT; i++) {
+            for (int i = 32 * LEDS_PER_SEGMENT; i < 34 * LEDS_PER_SEGMENT; i++)
                 if (i < NUM_LEDS) g_leds[i] = CRGB_BLACK;
-            }
         }
-        display_number(h2, 5, hc);
-        display_number(m1, 2, mc);
-        display_number(m2, 0, mc);
+        any_anim |= display_number_animated(h2, 5, hc, &s_anims[5]);
+        any_anim |= display_number_animated(m1, 2, mc, &s_anims[2]);
+        any_anim |= display_number_animated(m2, 0, mc, &s_anims[0]);
         if (g_config.clock_display_type == 3 || g_config.clock_display_type == 0) {
             blink_dots(&s_dots_on);
         }
     }
+    g_digit_anim_active = any_anim;
 }

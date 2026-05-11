@@ -118,6 +118,30 @@ esp_err_t get_body_param(httpd_req_t *req, const char *key,
     return ESP_OK;
 }
 
+esp_err_t get_body(httpd_req_t *req, char *buf, size_t buf_len) {
+    if (buf_len == 0) return ESP_FAIL;
+    buf[0] = '\0';
+    size_t to_read = req->content_len < buf_len - 1 ? req->content_len : buf_len - 1;
+    int n = httpd_req_recv(req, buf, to_read);
+    if (n <= 0) return ESP_FAIL;
+    buf[n] = '\0';
+    return ESP_OK;
+}
+
+esp_err_t parse_body_param(const char *body, const char *key, char *val, size_t val_len) {
+    char search[64];
+    snprintf(search, sizeof(search), "%s=", key);
+    char *p = strstr(body, search);
+    if (!p) { if (val_len) val[0] = '\0'; return ESP_FAIL; }
+    p += strlen(search);
+    char *e = strchr(p, '&');
+    size_t len = e ? (size_t)(e - p) : strlen(p);
+    if (len >= val_len) len = val_len - 1;
+    memcpy(val, p, len);
+    val[len] = '\0';
+    return ESP_OK;
+}
+
 void parse_hex_color(const char *hex, uint8_t *r, uint8_t *g, uint8_t *b) {
     if (hex[0] == '#') hex++;
     unsigned int v = (unsigned int)strtoul(hex, NULL, 16);
