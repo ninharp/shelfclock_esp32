@@ -43,6 +43,9 @@ typedef struct {
     bool     scroll_override;
     bool     scroll_options[8];
     uint8_t  lightshow_mode;
+    uint8_t  lightshow_speed;       // 1=sehr langsam … 3=normal … 5=sehr schnell
+    uint8_t  spotlight_brightness;  // 1-10, 10=Auto
+    uint8_t  spotlight_anim_mode;   // 0=static, 1=rainbow, 2=pulse, 3=chase, 4=color-cycle
     uint8_t  suspend_frequency;
     uint8_t  suspend_type;
     char     scroll_text[257];

@@ -28,21 +28,24 @@ static esp_err_t h_update_date_display_type(httpd_req_t *r) {
     xSemaphoreGive(g_config_mutex); storage_save_all(); SEND_OK(r);
 }
 static esp_err_t h_update_day_color(httpd_req_t *r) {
-    char hex[8]={0}; get_body_param(r,"dayColor",hex,sizeof(hex));
+    uint8_t rv,gv,bv;
+    if (get_body_rgb(r,&rv,&gv,&bv)!=ESP_OK) { SEND_OK(r); }
     xSemaphoreTake(g_config_mutex,portMAX_DELAY);
-    parse_hex_color(hex,&g_config.r[4],&g_config.g[4],&g_config.b[4]);
+    g_config.r[4]=rv; g_config.g[4]=gv; g_config.b[4]=bv;
     xSemaphoreGive(g_config_mutex); storage_save_all(); SEND_OK(r);
 }
 static esp_err_t h_update_month_color(httpd_req_t *r) {
-    char hex[8]={0}; get_body_param(r,"monthColor",hex,sizeof(hex));
+    uint8_t rv,gv,bv;
+    if (get_body_rgb(r,&rv,&gv,&bv)!=ESP_OK) { SEND_OK(r); }
     xSemaphoreTake(g_config_mutex,portMAX_DELAY);
-    parse_hex_color(hex,&g_config.r[5],&g_config.g[5],&g_config.b[5]);
+    g_config.r[5]=rv; g_config.g[5]=gv; g_config.b[5]=bv;
     xSemaphoreGive(g_config_mutex); storage_save_all(); SEND_OK(r);
 }
 static esp_err_t h_update_sep_color(httpd_req_t *r) {
-    char hex[8]={0}; get_body_param(r,"separatorColor",hex,sizeof(hex));
+    uint8_t rv,gv,bv;
+    if (get_body_rgb(r,&rv,&gv,&bv)!=ESP_OK) { SEND_OK(r); }
     xSemaphoreTake(g_config_mutex,portMAX_DELAY);
-    parse_hex_color(hex,&g_config.r[6],&g_config.g[6],&g_config.b[6]);
+    g_config.r[6]=rv; g_config.g[6]=gv; g_config.b[6]=bv;
     xSemaphoreGive(g_config_mutex); storage_save_all(); SEND_OK(r);
 }
 static esp_err_t h_update_date_color_settings(httpd_req_t *r) {
@@ -76,21 +79,24 @@ static esp_err_t h_update_temp_display_type(httpd_req_t *r) {
     xSemaphoreGive(g_config_mutex); storage_save_all(); SEND_OK(r);
 }
 static esp_err_t h_update_temp_color(httpd_req_t *r) {
-    char hex[8]={0}; get_body_param(r,"tempColor",hex,sizeof(hex));
+    uint8_t rv,gv,bv;
+    if (get_body_rgb(r,&rv,&gv,&bv)!=ESP_OK) { SEND_OK(r); }
     xSemaphoreTake(g_config_mutex,portMAX_DELAY);
-    parse_hex_color(hex,&g_config.r[7],&g_config.g[7],&g_config.b[7]);
+    g_config.r[7]=rv; g_config.g[7]=gv; g_config.b[7]=bv;
     xSemaphoreGive(g_config_mutex); storage_save_all(); SEND_OK(r);
 }
 static esp_err_t h_update_type_color(httpd_req_t *r) {
-    char hex[8]={0}; get_body_param(r,"typeColor",hex,sizeof(hex));
+    uint8_t rv,gv,bv;
+    if (get_body_rgb(r,&rv,&gv,&bv)!=ESP_OK) { SEND_OK(r); }
     xSemaphoreTake(g_config_mutex,portMAX_DELAY);
-    parse_hex_color(hex,&g_config.r[8],&g_config.g[8],&g_config.b[8]);
+    g_config.r[8]=rv; g_config.g[8]=gv; g_config.b[8]=bv;
     xSemaphoreGive(g_config_mutex); storage_save_all(); SEND_OK(r);
 }
 static esp_err_t h_update_degree_color(httpd_req_t *r) {
-    char hex[8]={0}; get_body_param(r,"degreeColor",hex,sizeof(hex));
+    uint8_t rv,gv,bv;
+    if (get_body_rgb(r,&rv,&gv,&bv)!=ESP_OK) { SEND_OK(r); }
     xSemaphoreTake(g_config_mutex,portMAX_DELAY);
-    parse_hex_color(hex,&g_config.r[9],&g_config.g[9],&g_config.b[9]);
+    g_config.r[9]=rv; g_config.g[9]=gv; g_config.b[9]=bv;
     xSemaphoreGive(g_config_mutex); storage_save_all(); SEND_OK(r);
 }
 static esp_err_t h_update_temp_color_settings(httpd_req_t *r) {
@@ -111,21 +117,24 @@ static esp_err_t h_update_humi_display_type(httpd_req_t *r) {
     xSemaphoreGive(g_config_mutex); storage_save_all(); SEND_OK(r);
 }
 static esp_err_t h_update_humi_color(httpd_req_t *r) {
-    char hex[8]={0}; get_body_param(r,"humiColor",hex,sizeof(hex));
+    uint8_t rv,gv,bv;
+    if (get_body_rgb(r,&rv,&gv,&bv)!=ESP_OK) { SEND_OK(r); }
     xSemaphoreTake(g_config_mutex,portMAX_DELAY);
-    parse_hex_color(hex,&g_config.r[10],&g_config.g[10],&g_config.b[10]);
+    g_config.r[10]=rv; g_config.g[10]=gv; g_config.b[10]=bv;
     xSemaphoreGive(g_config_mutex); storage_save_all(); SEND_OK(r);
 }
 static esp_err_t h_update_symbol_color(httpd_req_t *r) {
-    char hex[8]={0}; get_body_param(r,"symbolColor",hex,sizeof(hex));
+    uint8_t rv,gv,bv;
+    if (get_body_rgb(r,&rv,&gv,&bv)!=ESP_OK) { SEND_OK(r); }
     xSemaphoreTake(g_config_mutex,portMAX_DELAY);
-    parse_hex_color(hex,&g_config.r[11],&g_config.g[11],&g_config.b[11]);
+    g_config.r[11]=rv; g_config.g[11]=gv; g_config.b[11]=bv;
     xSemaphoreGive(g_config_mutex); storage_save_all(); SEND_OK(r);
 }
 static esp_err_t h_update_humi_decimal_color(httpd_req_t *r) {
-    char hex[8]={0}; get_body_param(r,"humiDecimalColor",hex,sizeof(hex));
+    uint8_t rv,gv,bv;
+    if (get_body_rgb(r,&rv,&gv,&bv)!=ESP_OK) { SEND_OK(r); }
     xSemaphoreTake(g_config_mutex,portMAX_DELAY);
-    parse_hex_color(hex,&g_config.r[12],&g_config.g[12],&g_config.b[12]);
+    g_config.r[12]=rv; g_config.g[12]=gv; g_config.b[12]=bv;
     xSemaphoreGive(g_config_mutex); storage_save_all(); SEND_OK(r);
 }
 static esp_err_t h_update_humi_color_settings(httpd_req_t *r) {

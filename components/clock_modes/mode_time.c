@@ -124,8 +124,8 @@ void mode_time_update(void) {
             }
         }
         display_number(h2, 5, hc);
-        display_number(m1, 3, mc);
-        display_number(m2, 1, mc);
+        display_number(m1, 2, mc);
+        display_number(m2, 0, mc);
         if (g_config.clock_display_type == 3 || g_config.clock_display_type == 0) {
             blink_dots(&s_dots_on);
         }

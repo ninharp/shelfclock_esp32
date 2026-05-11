@@ -92,6 +92,13 @@ function displayOff() {$.post("/goDisplayOffMode");}
 function scrollingMode() {$.post("/goScrollingMode");}
 function getpreset1() {$.post("/getPreset1");}
 function getpreset2() {$.post("/getPreset2");}
+function setLightshowSpeed(v) {$.post("/setLightshowSpeed", {lightshowSpeed: v});}
+function getLightshowSpeed() {
+  $.get("/getLightshowSpeed", function(d) {
+    var sel = document.getElementById("lightshowSpeed");
+    if (sel) sel.value = d;
+  });
+}
 
 
 function upleft() {
@@ -155,9 +162,10 @@ function getscoreboardColorRight() {
 }
 
 window.addEventListener("load", myInit, true); function myInit(){
-  getscoreboardColorLeft()
-  getscoreboardColorRight()
-  }
+  getscoreboardColorLeft();
+  getscoreboardColorRight();
+  getLightshowSpeed();
+}
 </script>	
 
 <style type="text/css">
@@ -547,6 +555,17 @@ window.addEventListener("load", myInit, true); function myInit(){
 							<input type="button" class="favorite orange-styled" value="Snake" onclick="showLightshow6()">
 							<input type="button" class="favorite orange-styled" value="Cylon" onclick="showLightshow7()">
 						</form>
+						<br>
+						<div style="text-align:center;">
+							<label><strong>Speed:</strong></label>
+							<select id="lightshowSpeed" onchange="setLightshowSpeed(this.value)" style="font-size:1rem;padding:2px 6px;border-radius:6px;">
+								<option value="1">Very Slow</option>
+								<option value="2">Slow</option>
+								<option value="3">Normal</option>
+								<option value="4">Fast</option>
+								<option value="5">Very Fast</option>
+							</select>
+						</div>
 					</form>
 				</div>
 			</div>

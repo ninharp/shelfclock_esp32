@@ -2,7 +2,7 @@
 #include <stdbool.h>
 #include <stdatomic.h>
 
-#define BUZZER_GPIO_NUM    16
+#define BUZZER_GPIO_NUM    5
 #define RTTTL_SONG_SMB      0
 #define RTTTL_SONG_BIRTHDAY 3
 #define RTTTL_SONG_STARWARS 1

@@ -24,15 +24,17 @@ static esp_err_t h_get_sb_left_rgb(httpd_req_t *r)  { SEND_RGBA(r,g_config.r[13]
 static esp_err_t h_get_sb_right_rgb(httpd_req_t *r) { SEND_RGBA(r,g_config.r[14],g_config.g[14],g_config.b[14]); }
 
 static esp_err_t h_update_sb_left(httpd_req_t *r) {
-    char hex[8]={0}; get_body_param(r,"scoreboardColorLeft",hex,sizeof(hex));
+    uint8_t rv,gv,bv;
+    if (get_body_rgb(r,&rv,&gv,&bv)!=ESP_OK) { SEND_OK(r); }
     xSemaphoreTake(g_config_mutex,portMAX_DELAY);
-    parse_hex_color(hex,&g_config.r[13],&g_config.g[13],&g_config.b[13]);
+    g_config.r[13]=rv; g_config.g[13]=gv; g_config.b[13]=bv;
     xSemaphoreGive(g_config_mutex); storage_save_all(); SEND_OK(r);
 }
 static esp_err_t h_update_sb_right(httpd_req_t *r) {
-    char hex[8]={0}; get_body_param(r,"scoreboardColorRight",hex,sizeof(hex));
+    uint8_t rv,gv,bv;
+    if (get_body_rgb(r,&rv,&gv,&bv)!=ESP_OK) { SEND_OK(r); }
     xSemaphoreTake(g_config_mutex,portMAX_DELAY);
-    parse_hex_color(hex,&g_config.r[14],&g_config.g[14],&g_config.b[14]);
+    g_config.r[14]=rv; g_config.g[14]=gv; g_config.b[14]=bv;
     xSemaphoreGive(g_config_mutex); storage_save_all(); SEND_OK(r);
 }
 
@@ -41,21 +43,22 @@ static esp_err_t h_get_cd_colorchange(httpd_req_t *r) { SEND_INT(r,g_config.colo
 static esp_err_t h_get_cd_alarm(httpd_req_t *r)       { SEND_INT(r,g_config.use_audible_alarm); }
 
 static esp_err_t h_update_cd_color(httpd_req_t *r) {
-    char hex[8]={0}; get_body_param(r,"colorCD",hex,sizeof(hex));
+    uint8_t rv,gv,bv;
+    if (get_body_rgb(r,&rv,&gv,&bv)!=ESP_OK) { SEND_OK(r); }
     xSemaphoreTake(g_config_mutex,portMAX_DELAY);
-    parse_hex_color(hex,&g_config.cd_r,&g_config.cd_g,&g_config.cd_b);
+    g_config.cd_r=rv; g_config.cd_g=gv; g_config.cd_b=bv;
     xSemaphoreGive(g_config_mutex); storage_save_all(); SEND_OK(r);
 }
 static esp_err_t h_update_cd_colorchange(httpd_req_t *r) {
-    char buf[4]={0}; get_body_param(r,"colorchangeCD",buf,sizeof(buf));
+    char buf[8]={0}; get_body_param(r,"colorchangeCD",buf,sizeof(buf));
     xSemaphoreTake(g_config_mutex,portMAX_DELAY);
-    g_config.color_change_cd=atoi(buf)?1:0;
+    g_config.color_change_cd=parse_bool_str(buf);
     xSemaphoreGive(g_config_mutex); storage_save_all(); SEND_OK(r);
 }
 static esp_err_t h_update_cd_alarm(httpd_req_t *r) {
-    char buf[4]={0}; get_body_param(r,"alarmCD",buf,sizeof(buf));
+    char buf[8]={0}; get_body_param(r,"alarmCD",buf,sizeof(buf));
     xSemaphoreTake(g_config_mutex,portMAX_DELAY);
-    g_config.use_audible_alarm=atoi(buf)?1:0;
+    g_config.use_audible_alarm=parse_bool_str(buf);
     xSemaphoreGive(g_config_mutex); storage_save_all(); SEND_OK(r);
 }
 

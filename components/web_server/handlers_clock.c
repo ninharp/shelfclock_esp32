@@ -112,6 +112,17 @@ static esp_err_t h_go_spectrum(httpd_req_t *r) {
     xSemaphoreGive(g_config_mutex);
     storage_save_all(); SEND_OK(r);
 }
+static esp_err_t h_get_lightshow_speed(httpd_req_t *r) { SEND_INT(r, g_config.lightshow_speed); }
+static esp_err_t h_set_lightshow_speed(httpd_req_t *r) {
+    char buf[8]={0}; get_body_param(r,"lightshowSpeed",buf,sizeof(buf));
+    uint8_t v = (uint8_t)atoi(buf);
+    if (v < 1) v = 1;
+    if (v > 5) v = 5;
+    xSemaphoreTake(g_config_mutex,portMAX_DELAY);
+    g_config.lightshow_speed = v;
+    xSemaphoreGive(g_config_mutex); storage_save_all(); SEND_OK(r);
+}
+
 static esp_err_t h_get_preset1(httpd_req_t *r) { storage_load_preset(1); SEND_OK(r); }
 static esp_err_t h_get_preset2(httpd_req_t *r) { storage_load_preset(2); SEND_OK(r); }
 static esp_err_t h_set_preset1(httpd_req_t *r) { storage_save_preset(1); SEND_OK(r); }
@@ -162,36 +173,37 @@ static esp_err_t h_update_colon_type(httpd_req_t *r) {
     xSemaphoreGive(g_config_mutex); storage_save_all(); SEND_OK(r);
 }
 static esp_err_t h_update_timezone(httpd_req_t *r) {
-    char gmt[16]={0}, dst[4]={0};
-    get_body_param(r,"gmtOffset",gmt,sizeof(gmt));
-    get_body_param(r,"DSTime",dst,sizeof(dst));
+    char gmt[16]={0};
+    get_body_param(r,"TimezoneSetting",gmt,sizeof(gmt));
     xSemaphoreTake(g_config_mutex,portMAX_DELAY);
     g_config.gmt_offset_sec=atoi(gmt);
-    g_config.ds_time=atoi(dst)?1:0;
     xSemaphoreGive(g_config_mutex); storage_save_all(); SEND_OK(r);
 }
 static esp_err_t h_update_ds_time(httpd_req_t *r) {
-    char buf[4]={0}; get_body_param(r,"DSTime",buf,sizeof(buf));
+    char buf[8]={0}; get_body_param(r,"DSTime",buf,sizeof(buf));
     xSemaphoreTake(g_config_mutex,portMAX_DELAY);
-    g_config.ds_time=atoi(buf)?1:0;
+    g_config.ds_time=parse_bool_str(buf);
     xSemaphoreGive(g_config_mutex); storage_save_all(); SEND_OK(r);
 }
 static esp_err_t h_update_hour_color(httpd_req_t *r) {
-    char hex[8]={0}; get_body_param(r,"hourColor",hex,sizeof(hex));
+    uint8_t rv,gv,bv;
+    if (get_body_rgb(r,&rv,&gv,&bv)!=ESP_OK) { SEND_OK(r); }
     xSemaphoreTake(g_config_mutex,portMAX_DELAY);
-    parse_hex_color(hex,&g_config.r[1],&g_config.g[1],&g_config.b[1]);
+    g_config.r[1]=rv; g_config.g[1]=gv; g_config.b[1]=bv;
     xSemaphoreGive(g_config_mutex); storage_save_all(); SEND_OK(r);
 }
 static esp_err_t h_update_mins_color(httpd_req_t *r) {
-    char hex[8]={0}; get_body_param(r,"minsColor",hex,sizeof(hex));
+    uint8_t rv,gv,bv;
+    if (get_body_rgb(r,&rv,&gv,&bv)!=ESP_OK) { SEND_OK(r); }
     xSemaphoreTake(g_config_mutex,portMAX_DELAY);
-    parse_hex_color(hex,&g_config.r[2],&g_config.g[2],&g_config.b[2]);
+    g_config.r[2]=rv; g_config.g[2]=gv; g_config.b[2]=bv;
     xSemaphoreGive(g_config_mutex); storage_save_all(); SEND_OK(r);
 }
 static esp_err_t h_update_colon_color(httpd_req_t *r) {
-    char hex[8]={0}; get_body_param(r,"colonColor",hex,sizeof(hex));
+    uint8_t rv,gv,bv;
+    if (get_body_rgb(r,&rv,&gv,&bv)!=ESP_OK) { SEND_OK(r); }
     xSemaphoreTake(g_config_mutex,portMAX_DELAY);
-    parse_hex_color(hex,&g_config.r[3],&g_config.g[3],&g_config.b[3]);
+    g_config.r[3]=rv; g_config.g[3]=gv; g_config.b[3]=bv;
     xSemaphoreGive(g_config_mutex); storage_save_all(); SEND_OK(r);
 }
 static esp_err_t h_update_clock_color_settings(httpd_req_t *r) {
@@ -212,6 +224,8 @@ void register_handlers_clock(httpd_handle_t s) {
     REG(s, HTTP_POST, "/goCountdownMode",   h_go_countdown);
     REG(s, HTTP_POST, "/goStopwatchMode",   h_go_stopwatch);
     REG(s, HTTP_POST, "/goLightshowMode",   h_go_lightshow);
+    REG(s, HTTP_GET,  "/getLightshowSpeed", h_get_lightshow_speed);
+    REG(s, HTTP_POST, "/setLightshowSpeed", h_set_lightshow_speed);
     REG(s, HTTP_POST, "/goSpectrumMode",    h_go_spectrum);
     REG(s, HTTP_POST, "/getPreset1",        h_get_preset1);
     REG(s, HTTP_POST, "/getPreset2",        h_get_preset2);

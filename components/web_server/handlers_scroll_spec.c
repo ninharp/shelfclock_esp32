@@ -36,14 +36,15 @@ static esp_err_t h_update_scroll_freq(httpd_req_t *r) {
     xSemaphoreGive(g_config_mutex); storage_save_all(); SEND_OK(r);
 }
 static esp_err_t h_update_scroll_override(httpd_req_t *r) {
-    char buf[4]={0}; get_body_param(r,"scrollOverride",buf,sizeof(buf));
-    xSemaphoreTake(g_config_mutex,portMAX_DELAY); g_config.scroll_override=atoi(buf)?1:0;
+    char buf[8]={0}; get_body_param(r,"scrollOverride",buf,sizeof(buf));
+    xSemaphoreTake(g_config_mutex,portMAX_DELAY); g_config.scroll_override=parse_bool_str(buf);
     xSemaphoreGive(g_config_mutex); storage_save_all(); SEND_OK(r);
 }
 static esp_err_t h_update_scroll_color(httpd_req_t *r) {
-    char hex[8]={0}; get_body_param(r,"scrollColor",hex,sizeof(hex));
+    uint8_t rv,gv,bv;
+    if (get_body_rgb(r,&rv,&gv,&bv)!=ESP_OK) { SEND_OK(r); }
     xSemaphoreTake(g_config_mutex,portMAX_DELAY);
-    parse_hex_color(hex,&g_config.r[16],&g_config.g[16],&g_config.b[16]);
+    g_config.r[16]=rv; g_config.g[16]=gv; g_config.b[16]=bv;
     xSemaphoreGive(g_config_mutex); storage_save_all(); SEND_OK(r);
 }
 static esp_err_t h_update_scroll_color_set(httpd_req_t *r) {
@@ -58,7 +59,7 @@ static esp_err_t h_update_scroll_opt(httpd_req_t *r) {
     char key[18]; snprintf(key,sizeof(key),"scrollOptions%d",idx+1);
     get_body_param(r,key,buf,sizeof(buf));
     xSemaphoreTake(g_config_mutex,portMAX_DELAY);
-    g_config.scroll_options[idx]=atoi(buf)?1:0;
+    g_config.scroll_options[idx]=parse_bool_str(buf);
     xSemaphoreGive(g_config_mutex); storage_save_all(); SEND_OK(r);
 }
 static esp_err_t h_update_scroll_text(httpd_req_t *r) {
@@ -75,20 +76,22 @@ static esp_err_t h_get_spec_bg(httpd_req_t *r)        { SEND_HEX(r,g_config.r[17
 static esp_err_t h_get_spec_color_set(httpd_req_t *r) { SEND_INT(r,g_config.spectrum_color_settings); }
 static esp_err_t h_get_spec_bg_set(httpd_req_t *r)    { SEND_INT(r,g_config.spectrum_background_settings); }
 static esp_err_t h_update_rand_spec(httpd_req_t *r) {
-    char buf[4]={0}; get_body_param(r,"randomSpectrumMode",buf,sizeof(buf));
-    xSemaphoreTake(g_config_mutex,portMAX_DELAY); g_config.random_spectrum_mode=atoi(buf)?1:0;
+    char buf[8]={0}; get_body_param(r,"randomSpectrumMode",buf,sizeof(buf));
+    xSemaphoreTake(g_config_mutex,portMAX_DELAY); g_config.random_spectrum_mode=parse_bool_str(buf);
     xSemaphoreGive(g_config_mutex); storage_save_all(); SEND_OK(r);
 }
 static esp_err_t h_update_spec_color(httpd_req_t *r) {
-    char hex[8]={0}; get_body_param(r,"spectrumColor",hex,sizeof(hex));
+    uint8_t rv,gv,bv;
+    if (get_body_rgb(r,&rv,&gv,&bv)!=ESP_OK) { SEND_OK(r); }
     xSemaphoreTake(g_config_mutex,portMAX_DELAY);
-    parse_hex_color(hex,&g_config.r[15],&g_config.g[15],&g_config.b[15]);
+    g_config.r[15]=rv; g_config.g[15]=gv; g_config.b[15]=bv;
     xSemaphoreGive(g_config_mutex); storage_save_all(); SEND_OK(r);
 }
 static esp_err_t h_update_spec_bg(httpd_req_t *r) {
-    char hex[8]={0}; get_body_param(r,"spectrumBackground",hex,sizeof(hex));
+    uint8_t rv,gv,bv;
+    if (get_body_rgb(r,&rv,&gv,&bv)!=ESP_OK) { SEND_OK(r); }
     xSemaphoreTake(g_config_mutex,portMAX_DELAY);
-    parse_hex_color(hex,&g_config.r[17],&g_config.g[17],&g_config.b[17]);
+    g_config.r[17]=rv; g_config.g[17]=gv; g_config.b[17]=bv;
     xSemaphoreGive(g_config_mutex); storage_save_all(); SEND_OK(r);
 }
 static esp_err_t h_update_spec_color_set(httpd_req_t *r) {

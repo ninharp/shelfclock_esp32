@@ -51,12 +51,7 @@ static bool try_connect_from_nvs(void) {
     nvs_close(h);
     if (strlen(ssid) == 0) return false;
 
-    ESP_ERROR_CHECK(esp_netif_init());
-    ESP_ERROR_CHECK(esp_event_loop_create_default());
     s_sta_netif = esp_netif_create_default_wifi_sta();
-
-    wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
-    ESP_ERROR_CHECK(esp_wifi_init(&cfg));
     esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID, event_handler, NULL);
     esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, event_handler, NULL);
 
@@ -70,11 +65,21 @@ static bool try_connect_from_nvs(void) {
     EventBits_t bits = xEventGroupWaitBits(s_events,
         WIFI_CONNECTED_BIT | WIFI_FAIL_BIT, pdFALSE, pdFALSE,
         pdMS_TO_TICKS(15000));
+
+    if (!(bits & WIFI_CONNECTED_BIT)) {
+        esp_wifi_stop();
+    }
     return (bits & WIFI_CONNECTED_BIT) != 0;
 }
 
 bool wifi_manager_init(void) {
     s_events = xEventGroupCreate();
+
+    ESP_ERROR_CHECK(esp_netif_init());
+    ESP_ERROR_CHECK(esp_event_loop_create_default());
+    wifi_init_config_t wicfg = WIFI_INIT_CONFIG_DEFAULT();
+    ESP_ERROR_CHECK(esp_wifi_init(&wicfg));
+
     if (try_connect_from_nvs()) {
         ESP_LOGI(TAG, "WiFi connected");
         return true;

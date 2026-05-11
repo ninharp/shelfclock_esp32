@@ -9,7 +9,7 @@
 #define ADC_LIGHT_CHANNEL   1
 #define I2S_BCK_GPIO_NUM    6
 #define I2S_WS_GPIO_NUM     7
-#define I2S_DIN_GPIO_NUM    8
+#define I2S_DIN_GPIO_NUM    3
 #define DS3231_I2C_ADDR     0x68
 
 void     sensors_init(void);

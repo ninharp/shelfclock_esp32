@@ -25,6 +25,8 @@ static esp_err_t h_get_pastel(httpd_req_t *r)          { SEND_INT(r,g_config.pas
 static esp_err_t h_get_ccfreq(httpd_req_t *r)          { SEND_INT(r,g_config.color_change_frequency); }
 static esp_err_t h_get_suspend_type(httpd_req_t *r)    { SEND_INT(r,g_config.suspend_type); }
 static esp_err_t h_get_suspend_freq(httpd_req_t *r)    { SEND_INT(r,g_config.suspend_frequency); }
+static esp_err_t h_get_spot_brightness(httpd_req_t *r) { SEND_INT(r,g_config.spotlight_brightness); }
+static esp_err_t h_get_spot_anim(httpd_req_t *r)       { SEND_INT(r,g_config.spotlight_anim_mode); }
 
 static esp_err_t h_update_brightness(httpd_req_t *r) {
     char buf[8]={0}; get_body_param(r,"rangeBrightness",buf,sizeof(buf));
@@ -32,9 +34,10 @@ static esp_err_t h_update_brightness(httpd_req_t *r) {
     xSemaphoreGive(g_config_mutex); storage_save_all(); SEND_OK(r);
 }
 static esp_err_t h_update_spotlights_color(httpd_req_t *r) {
-    char hex[8]={0}; get_body_param(r,"spotlightsColor",hex,sizeof(hex));
+    uint8_t rv,gv,bv;
+    if (get_body_rgb(r,&rv,&gv,&bv)!=ESP_OK) { SEND_OK(r); }
     xSemaphoreTake(g_config_mutex,portMAX_DELAY);
-    parse_hex_color(hex,&g_config.r[0],&g_config.g[0],&g_config.b[0]);
+    g_config.r[0]=rv; g_config.g[0]=gv; g_config.b[0]=bv;
     xSemaphoreGive(g_config_mutex); storage_save_all(); SEND_OK(r);
 }
 static esp_err_t h_update_spotlights_set(httpd_req_t *r) {
@@ -43,8 +46,8 @@ static esp_err_t h_update_spotlights_set(httpd_req_t *r) {
     xSemaphoreGive(g_config_mutex); storage_save_all(); SEND_OK(r);
 }
 static esp_err_t h_update_use_spotlights(httpd_req_t *r) {
-    char buf[4]={0}; get_body_param(r,"useSpotlights",buf,sizeof(buf));
-    xSemaphoreTake(g_config_mutex,portMAX_DELAY); g_config.use_spotlights=atoi(buf)?1:0;
+    char buf[8]={0}; get_body_param(r,"useSpotlights",buf,sizeof(buf));
+    xSemaphoreTake(g_config_mutex,portMAX_DELAY); g_config.use_spotlights=parse_bool_str(buf);
     xSemaphoreGive(g_config_mutex); storage_save_all(); SEND_OK(r);
 }
 static esp_err_t h_update_pastel(httpd_req_t *r) {
@@ -65,6 +68,19 @@ static esp_err_t h_update_suspend_type(httpd_req_t *r) {
 static esp_err_t h_update_suspend_freq(httpd_req_t *r) {
     char buf[8]={0}; get_body_param(r,"suspendFrequency",buf,sizeof(buf));
     xSemaphoreTake(g_config_mutex,portMAX_DELAY); g_config.suspend_frequency=atoi(buf);
+    xSemaphoreGive(g_config_mutex); storage_save_all(); SEND_OK(r);
+}
+static esp_err_t h_update_spot_brightness(httpd_req_t *r) {
+    char buf[8]={0}; get_body_param(r,"spotBrightness",buf,sizeof(buf));
+    uint8_t v=(uint8_t)atoi(buf);
+    xSemaphoreTake(g_config_mutex,portMAX_DELAY); g_config.spotlight_brightness=v;
+    xSemaphoreGive(g_config_mutex); storage_save_all(); SEND_OK(r);
+}
+static esp_err_t h_update_spot_anim(httpd_req_t *r) {
+    char buf[8]={0}; get_body_param(r,"spotAnimMode",buf,sizeof(buf));
+    uint8_t v=(uint8_t)atoi(buf);
+    if (v>4) v=4;
+    xSemaphoreTake(g_config_mutex,portMAX_DELAY); g_config.spotlight_anim_mode=v;
     xSemaphoreGive(g_config_mutex); storage_save_all(); SEND_OK(r);
 }
 
@@ -110,5 +126,9 @@ void register_handlers_system(httpd_handle_t s) {
     REG(s,HTTP_POST,"/updateColorChangeFrequency",   h_update_ccfreq);
     REG(s,HTTP_POST,"/updatesuspendType",            h_update_suspend_type);
     REG(s,HTTP_POST,"/updatesuspendFrequency",       h_update_suspend_freq);
+    REG(s,HTTP_GET, "/getSpotBrightness",            h_get_spot_brightness);
+    REG(s,HTTP_GET, "/getSpotAnimMode",              h_get_spot_anim);
+    REG(s,HTTP_POST,"/setSpotBrightness",            h_update_spot_brightness);
+    REG(s,HTTP_POST,"/setSpotAnimMode",              h_update_spot_anim);
     REG(s,HTTP_GET, "/debugpage",                    h_debugpage);
 }

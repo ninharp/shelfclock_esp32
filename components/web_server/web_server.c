@@ -32,7 +32,7 @@ static void spiffs_init(void) {
 }
 
 static esp_err_t static_file_handler(httpd_req_t *req) {
-    char path[640];
+    char path[1100];
     snprintf(path, sizeof(path), "/spiffs%s",
              strcmp(req->uri, "/") == 0 ? "/index.html" : req->uri);
 
@@ -126,6 +126,20 @@ void parse_hex_color(const char *hex, uint8_t *r, uint8_t *g, uint8_t *b) {
     *b =  v        & 0xFF;
 }
 
+/* Liest einmal den POST-Body und parst r=, g=, b= (gesendet von hexToRgb() in JS). */
+esp_err_t get_body_rgb(httpd_req_t *req, uint8_t *r, uint8_t *g, uint8_t *b) {
+    char body[64] = {0};
+    size_t to_read = req->content_len < sizeof(body)-1 ? req->content_len : sizeof(body)-1;
+    int n = httpd_req_recv(req, body, to_read);
+    if (n <= 0) return ESP_FAIL;
+    body[n] = '\0';
+    char *p;
+    p = strstr(body, "r="); if (!p) return ESP_FAIL; *r = (uint8_t)atoi(p+2);
+    p = strstr(body, "g="); if (!p) return ESP_FAIL; *g = (uint8_t)atoi(p+2);
+    p = strstr(body, "b="); if (!p) return ESP_FAIL; *b = (uint8_t)atoi(p+2);
+    return ESP_OK;
+}
+
 void web_server_init(void) {
     spiffs_init();
 
@@ -135,7 +149,7 @@ void web_server_init(void) {
     ESP_LOGI(TAG, "mDNS: http://shelfclock.local");
 
     httpd_config_t cfg = HTTPD_DEFAULT_CONFIG();
-    cfg.max_uri_handlers = 120;
+    cfg.max_uri_handlers = 150;
     cfg.stack_size       = 8192;
     cfg.lru_purge_enable = true;
     cfg.uri_match_fn     = httpd_uri_match_wildcard;

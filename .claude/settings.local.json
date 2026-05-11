@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git commit *)",
+      "Bash(xargs cat *)",
+      "Bash(ln -sf build/compile_commands.json compile_commands.json)",
+      "Bash(bash *)",
+      "Bash(git -C /Users/michael/projects/ShelfClock add components/web_server/handlers_clock.c components/web_server/handlers_date_temp_humi.c components/web_server/handlers_scores_cd_ls.c components/web_server/handlers_scroll_spec.c components/web_server/handlers_system.c components/clock_modes/include/clock_modes.h components/clock_modes/mode_time.c components/clock_modes/mode_date.c components/clock_modes/mode_temperature.c components/clock_modes/mode_humidity.c components/clock_modes/mode_scoreboard.c components/clock_modes/mode_countdown.c components/clock_modes/mode_stopwatch.c components/clock_modes/mode_scroll.c)",
+      "Bash(git -C /Users/michael/projects/ShelfClock status)",
+      "Bash(git *)",
+      "Bash(python3 *)"
+    ]
+  }
+}

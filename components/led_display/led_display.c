@@ -219,7 +219,6 @@ void blink_dots(bool *dots_on) {
         for (int i = 20*LEDS_PER_SEGMENT; i < 21*LEDS_PER_SEGMENT; i++)
             if (i < NUM_LEDS) g_leds[i] = col;
     }
-    *dots_on = !(*dots_on);
 }
 
 void set_brightness(uint8_t brightness) {

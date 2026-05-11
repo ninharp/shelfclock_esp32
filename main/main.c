@@ -83,11 +83,20 @@ static void apply_brightness(void) {
     } else {
         bright = g_config.brightness;
     }
+    uint8_t spot_bright = g_config.spotlight_brightness;
+    /* Quadratische Gammakurve 0-255 → 0-255: feine Kontrolle im unteren Bereich */
+    uint8_t spot_b = (uint8_t)((uint32_t)spot_bright * spot_bright / 255);
+
     xSemaphoreTake(g_led_mutex, portMAX_DELAY);
-    for (int i = 0; i < NUM_LEDS; i++) {
+    for (int i = 0; i < SEGMENTS_LEDS; i++) {
         g_leds[i].r = (uint8_t)((uint16_t)g_leds[i].r * bright / 255);
         g_leds[i].g = (uint8_t)((uint16_t)g_leds[i].g * bright / 255);
         g_leds[i].b = (uint8_t)((uint16_t)g_leds[i].b * bright / 255);
+    }
+    for (int i = SEGMENTS_LEDS; i < NUM_LEDS; i++) {
+        g_leds[i].r = (uint8_t)((uint16_t)g_leds[i].r * spot_b / 255);
+        g_leds[i].g = (uint8_t)((uint16_t)g_leds[i].g * spot_b / 255);
+        g_leds[i].b = (uint8_t)((uint16_t)g_leds[i].b * spot_b / 255);
     }
     xSemaphoreGive(g_led_mutex);
 }
@@ -113,7 +122,16 @@ static void check_scroll_overlay(struct tm *ti, int secs) {
 
 // ── Main Task ─────────────────────────────────────────────────────────────────
 static void main_task(void *arg) {
-    int prev_min = -1, prev_hour = -1, prev_day = -1, prev_month = -1, prev_week = -1;
+    /* Zeitvariablen mit aktuellem Stand initialisieren damit g_flag_* beim
+       ersten Durchlauf nicht fälschlicherweise true sind. */
+    time_t _now0 = time(NULL);
+    struct tm _ti0; localtime_r(&_now0, &_ti0);
+    int prev_sec   = _ti0.tm_sec;
+    int prev_min   = _ti0.tm_min;
+    int prev_hour  = _ti0.tm_hour;
+    int prev_day   = _ti0.tm_mday;
+    int prev_month = _ti0.tm_mon;
+    int prev_week  = (_ti0.tm_yday + 7 - (_ti0.tm_wday ? _ti0.tm_wday - 1 : 6)) / 7;
 
     if (wifi_manager_is_connected()) {
         ntp_sync_start();
@@ -132,6 +150,7 @@ static void main_task(void *arg) {
 
     while (1) {
         int64_t tick_start = esp_timer_get_time();
+        uint8_t mode = g_config.clock_mode;
 
         update_sensors();
 
@@ -139,73 +158,96 @@ static void main_task(void *arg) {
         struct tm ti; localtime_r(&now, &ti);
         int secs = ti.tm_sec;
 
-        g_flag_min   = (ti.tm_min  != prev_min);
-        g_flag_hour  = (ti.tm_hour != prev_hour);
-        g_flag_day   = (ti.tm_mday != prev_day);
-        g_flag_month = (ti.tm_mon  != prev_month);
-        int cur_week = (ti.tm_yday + 7 - (ti.tm_wday ? ti.tm_wday - 1 : 6)) / 7;
-        g_flag_week  = (cur_week   != prev_week);
+        /* Zeit-Flags nur einmal pro Sekunde aktualisieren */
+        if (secs != prev_sec) {
+            prev_sec = secs;
 
-        if (g_flag_min)   prev_min   = ti.tm_min;
-        if (g_flag_hour)  prev_hour  = ti.tm_hour;
-        if (g_flag_day)   prev_day   = ti.tm_mday;
-        if (g_flag_month) prev_month = ti.tm_mon;
-        if (g_flag_week)  prev_week  = cur_week;
+            g_flag_min   = (ti.tm_min  != prev_min);
+            g_flag_hour  = (ti.tm_hour != prev_hour);
+            g_flag_day   = (ti.tm_mday != prev_day);
+            g_flag_month = (ti.tm_mon  != prev_month);
+            int cur_week = (ti.tm_yday + 7 - (ti.tm_wday ? ti.tm_wday - 1 : 6)) / 7;
+            g_flag_week  = (cur_week   != prev_week);
 
-        if (g_flag_day && wifi_manager_is_connected()) {
-            sntp_restart();
-            vTaskDelay(pdMS_TO_TICKS(2000));
-            time_t t2 = time(NULL);
-            struct tm ti2; localtime_r(&t2, &ti2);
-            ds3231_set_time(&ti2);
+            if (g_flag_min)   prev_min   = ti.tm_min;
+            if (g_flag_hour)  prev_hour  = ti.tm_hour;
+            if (g_flag_day)   prev_day   = ti.tm_mday;
+            if (g_flag_month) prev_month = ti.tm_mon;
+            if (g_flag_week)  prev_week  = cur_week;
+
+            if (g_flag_day && wifi_manager_is_connected()) {
+                sntp_restart();
+                vTaskDelay(pdMS_TO_TICKS(2000));
+                time_t t2 = time(NULL);
+                struct tm ti2; localtime_r(&t2, &ti2);
+                ds3231_set_time(&ti2);
+            }
+
+            if ((ti.tm_hour == 11 || ti.tm_hour == 23) && ti.tm_min == 11 && secs == 0 && !wish_done_today) {
+                wish_done_today = true;
+                scroll("MAkE A WISH");
+            }
+            if (ti.tm_hour == 0 && ti.tm_min == 0) wish_done_today = false;
+
+            check_scroll_overlay(&ti, secs);
+
+            if (g_config.random_spectrum_mode && mode == 9 && g_flag_min) {
+                xSemaphoreTake(g_config_mutex, portMAX_DELAY);
+                g_config.spectrum_mode = (uint8_t)(esp_random() % 12);
+                xSemaphoreGive(g_config_mutex);
+            }
+        } else {
+            g_flag_min = false; g_flag_hour = false;
+            g_flag_day = false; g_flag_week = false; g_flag_month = false;
         }
 
-        if ((ti.tm_hour == 11 || ti.tm_hour == 23) && ti.tm_min == 11 && secs == 0 && !wish_done_today) {
-            wish_done_today = true;
-            scroll("MAkE A WISH");
-        }
-        if (ti.tm_hour == 0 && ti.tm_min == 0) wish_done_today = false;
+        if (mode == 5) {
+            /* Lightshow: dispatch steuert Timing, Spotlights und led_refresh selbst */
+            xSemaphoreTake(g_led_mutex, portMAX_DELAY);
+            all_blank();
+            lightshow_dispatch();
+            xSemaphoreGive(g_led_mutex);
+        } else if (mode != 9) {
+            xSemaphoreTake(g_led_mutex, portMAX_DELAY);
+            all_blank();
+            switch (mode) {
+                case 0:  mode_time_update();        break;
+                case 1:  mode_countdown_update();   break;
+                case 2:  mode_temperature_update(); break;
+                case 3:  mode_scoreboard_update();  break;
+                case 4:  mode_stopwatch_update();   break;
+                case 7:  mode_date_update();        break;
+                case 8:  mode_humidity_update();    break;
+                case 10: /* display off */          break;
+                case 11: mode_scroll_update();      break;
+                default: break;
+            }
+            if (g_config.spotlight_anim_mode == 0) {
+                shelf_down_lights();
+            } else {
+                spotlight_anim_update();
+            }
+            xSemaphoreGive(g_led_mutex);
 
-        check_scroll_overlay(&ti, secs);
-
-        if (g_config.random_spectrum_mode && g_config.clock_mode == 9 && g_flag_min) {
-            xSemaphoreTake(g_config_mutex, portMAX_DELAY);
-            g_config.spectrum_mode = (uint8_t)(esp_random() % 12);
-            xSemaphoreGive(g_config_mutex);
-        }
-
-        xSemaphoreTake(g_led_mutex, portMAX_DELAY);
-        all_blank();
-        switch (g_config.clock_mode) {
-            case 0:  mode_time_update();        break;
-            case 1:  mode_countdown_update();   break;
-            case 2:  mode_temperature_update(); break;
-            case 3:  mode_scoreboard_update();  break;
-            case 4:  mode_stopwatch_update();   break;
-            case 5:  lightshow_dispatch();      break;
-            case 7:  mode_date_update();        break;
-            case 8:  mode_humidity_update();    break;
-            case 9:  /* spectrum: eigenständiger Task */ break;
-            case 10: /* display off */          break;
-            case 11: mode_scroll_update();      break;
-            default: break;
-        }
-        if (g_config.clock_mode != 9) {
-            shelf_down_lights();
-        }
-        xSemaphoreGive(g_led_mutex);
-
-        if (g_config.clock_mode != 9) {
             apply_brightness();
             xSemaphoreTake(g_led_mutex, portMAX_DELAY);
             led_refresh();
             xSemaphoreGive(g_led_mutex);
         }
 
+        /* Ziel-Framerate: animierte Modi ~30 fps, statische Modi ~5 fps */
+        int32_t target_ms;
+        switch (mode) {
+            case 1:  /* countdown  */
+            case 4:  /* stopwatch  */
+            case 5:  /* lightshow  */
+                target_ms = 33; break;
+            default:
+                target_ms = 200; break;
+        }
         int64_t elapsed = (esp_timer_get_time() - tick_start) / 1000;
-        int32_t delay_ms = 1000 - (int32_t)elapsed;
-        if (delay_ms > 10) vTaskDelay(pdMS_TO_TICKS(delay_ms));
-        else               vTaskDelay(pdMS_TO_TICKS(10));
+        int32_t delay_ms = target_ms - (int32_t)elapsed;
+        vTaskDelay(pdMS_TO_TICKS(delay_ms > 5 ? delay_ms : 5));
     }
 }
 

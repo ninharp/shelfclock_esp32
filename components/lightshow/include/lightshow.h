@@ -3,6 +3,7 @@
 #include <stdbool.h>
 
 void lightshow_dispatch(void);
+void spotlight_anim_update(void);
 
 void lightshow_chase(void);
 void lightshow_twinkles(void);

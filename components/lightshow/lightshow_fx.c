@@ -9,24 +9,20 @@
 void lightshow_chase(void) {
     static int pos = 0;
     static int cw_pos = 0;
-    for (int i = 0; i < SEGMENTS_LEDS; i++) {
-        g_leds[FAKE_LEDs[i]] = CRGB_BLACK;
-    }
+    for (int i = 0; i < FAKE_NUM_LEDS; i++) g_leds[FAKE_LEDs[i]] = CRGB_BLACK;
     for (int j = 0; j < 5; j++) {
-        int idx = (pos + j * 7) % SEGMENTS_LEDS;
+        int idx = (pos + j * 7) % FAKE_NUM_LEDS;
         g_leds[FAKE_LEDs[idx]] = color_wheel((cw_pos + j * 20) & 0xFF);
     }
-    pos = (pos + 1) % SEGMENTS_LEDS;
+    pos = (pos + 1) % FAKE_NUM_LEDS;
     cw_pos = (cw_pos + 1) & 0xFF;
 }
 
 // ── Twinkles ──────────────────────────────────────────────────────────────────
 void lightshow_twinkles(void) {
-    for (int i = 0; i < SEGMENTS_LEDS; i++) {
-        fade_to_black_by(&g_leds[FAKE_LEDs[i]], 30);
-    }
+    for (int i = 0; i < FAKE_NUM_LEDS; i++) fade_to_black_by(&g_leds[FAKE_LEDs[i]], 30);
     for (int i = 0; i < 10; i++) {
-        int idx = esp_random() % SEGMENTS_LEDS;
+        int idx = esp_random() % FAKE_NUM_LEDS;
         g_leds[FAKE_LEDs[idx]] = random_color(g_config.pastel_colors);
     }
 }
@@ -34,8 +30,8 @@ void lightshow_twinkles(void) {
 // ── Rainbow ───────────────────────────────────────────────────────────────────
 void lightshow_rainbow(void) {
     static int hue = 0;
-    for (int i = 0; i < SEGMENTS_LEDS; i++) {
-        g_leds[FAKE_LEDs[i]] = hsv_to_rgb((hue + i * 256/SEGMENTS_LEDS) & 0xFF, 255, 200);
+    for (int i = 0; i < FAKE_NUM_LEDS; i++) {
+        g_leds[FAKE_LEDs[i]] = hsv_to_rgb((hue + i * 256/FAKE_NUM_LEDS) & 0xFF, 255, 200);
     }
     hue = (hue + 2) & 0xFF;
 }
@@ -60,7 +56,6 @@ void lightshow_rain(void) {
             if (real < NUM_LEDS) g_leds[real] = col;
         }
     }
-    led_refresh();
 }
 
 // ── Fire ──────────────────────────────────────────────────────────────────────
@@ -83,7 +78,6 @@ void lightshow_fire(void) {
             if (real < NUM_LEDS) g_leds[real] = col;
         }
     }
-    led_refresh();
 }
 
 // ── Snake ─────────────────────────────────────────────────────────────────────
@@ -91,13 +85,13 @@ void lightshow_snake(void) {
     static int pos = 0;
     static int dir = 1;
     static int cw  = 0;
-    for (int i = 0; i < SEGMENTS_LEDS; i++) fade_to_black_by(&g_leds[FAKE_LEDs_SNAKE[i]], 50);
+    for (int i = 0; i < FAKE_NUM_LEDS; i++) fade_to_black_by(&g_leds[FAKE_LEDs[i]], 50);
     for (int j = 0; j < 14; j++) {
-        int idx = (pos + j) % SEGMENTS_LEDS;
-        g_leds[FAKE_LEDs_SNAKE[idx]] = color_wheel((cw + j*8) & 0xFF);
+        int idx = (pos + j) % FAKE_NUM_LEDS;
+        g_leds[FAKE_LEDs[idx]] = color_wheel((cw + j*8) & 0xFF);
     }
     pos += dir;
-    if (pos >= SEGMENTS_LEDS || pos < 0) { dir = -dir; pos += dir; }
+    if (pos >= FAKE_NUM_LEDS || pos < 0) { dir = -dir; pos += dir; }
     cw = (cw + 3) & 0xFF;
 }
 
@@ -106,13 +100,14 @@ void lightshow_cylon(void) {
     static int pos = 0;
     static int dir = 1;
     static int cw  = 0;
-    for (int i = 0; i < SEGMENTS_LEDS; i++) fade_to_black_by(&g_leds[FAKE_LEDs[i]], 40);
+    #define CYLON_COLS (FAKE_NUM_LEDS / LEDS_PER_SEGMENT)
+    for (int i = 0; i < FAKE_NUM_LEDS; i++) fade_to_black_by(&g_leds[FAKE_LEDs[i]], 40);
     int base = pos * LEDS_PER_SEGMENT;
     for (int j = 0; j < LEDS_PER_SEGMENT; j++) {
-        if (base+j < SEGMENTS_LEDS) g_leds[FAKE_LEDs[base+j]] = color_wheel(cw & 0xFF);
+        if (base+j < FAKE_NUM_LEDS) g_leds[FAKE_LEDs[base+j]] = color_wheel(cw & 0xFF);
     }
     pos += dir;
-    if (pos >= SPECTRUM_PIXELS || pos < 0) { dir = -dir; pos += dir; }
+    if (pos >= CYLON_COLS || pos < 0) { dir = -dir; pos += dir; }
     cw = (cw + 4) & 0xFF;
 }
 
@@ -136,5 +131,4 @@ void lightshow_green_matrix(void) {
         }
         if (esp_random() % 3 == 0) s_gm_pos[c] = (s_gm_pos[c] + 1) % LEDS_PER_SEGMENT;
     }
-    led_refresh();
 }

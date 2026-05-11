@@ -1,9 +1,11 @@
 #include "storage.h"
 #include "nvs_flash.h"
 #include "nvs.h"
+#include "esp_log.h"
 #include <string.h>
 #include <time.h>
 
+static const char *TAG = "storage";
 static const char *NVS_NS = "shelfclock";
 
 clock_config_t g_config;
@@ -38,6 +40,9 @@ void storage_defaults(void) {
     g_config.random_spectrum_mode    = false;
     g_config.scroll_override         = true;
     g_config.lightshow_mode          = 0;
+    g_config.lightshow_speed         = 3;
+    g_config.spotlight_brightness    = 180;
+    g_config.spotlight_anim_mode     = 0;
     g_config.suspend_frequency       = 1;
     g_config.suspend_type            = 0;
     g_config.scoreboard_left         = 0;
@@ -79,6 +84,9 @@ static void load_from_nvs(nvs_handle_t h) {
     if (nvs_get_u8(h,  "scrollColorSet", &u8)  == ESP_OK) g_config.scroll_color_settings = u8;
     if (nvs_get_u8(h,  "scrollFreq",     &u8)  == ESP_OK) g_config.scroll_frequency = u8;
     if (nvs_get_u8(h,  "lightshowMode",  &u8)  == ESP_OK) g_config.lightshow_mode = u8;
+    if (nvs_get_u8(h,  "lightshowSpeed", &u8)  == ESP_OK) g_config.lightshow_speed = u8;
+    if (nvs_get_u8(h,  "spotBrightness", &u8)  == ESP_OK) g_config.spotlight_brightness = u8;
+    if (nvs_get_u8(h,  "spotAnimMode",   &u8)  == ESP_OK) g_config.spotlight_anim_mode = u8;
     if (nvs_get_u8(h,  "suspendFreq",    &u8)  == ESP_OK) g_config.suspend_frequency = u8;
     if (nvs_get_u8(h,  "suspendType",    &u8)  == ESP_OK) g_config.suspend_type = u8;
     if (nvs_get_u8(h,  "alarmCD",        &u8)  == ESP_OK) g_config.use_audible_alarm = (bool)u8;
@@ -150,6 +158,9 @@ void storage_save_all(void) {
     nvs_set_u8(h,  "scrollColorSet", g_config.scroll_color_settings);
     nvs_set_u8(h,  "scrollFreq",     g_config.scroll_frequency);
     nvs_set_u8(h,  "lightshowMode",  g_config.lightshow_mode);
+    nvs_set_u8(h,  "lightshowSpeed", g_config.lightshow_speed);
+    nvs_set_u8(h,  "spotBrightness", g_config.spotlight_brightness);
+    nvs_set_u8(h,  "spotAnimMode",   g_config.spotlight_anim_mode);
     nvs_set_u8(h,  "suspendFreq",    g_config.suspend_frequency);
     nvs_set_u8(h,  "suspendType",    g_config.suspend_type);
     nvs_set_u8(h,  "alarmCD",        (uint8_t)g_config.use_audible_alarm);
@@ -183,16 +194,22 @@ void storage_save_all(void) {
 void storage_load_preset(int n) {
     char ns[16]; snprintf(ns, sizeof(ns), "shelfclock-p%d", n);
     nvs_handle_t h;
-    if (nvs_open(ns, NVS_READONLY, &h) == ESP_OK) {
-        load_from_nvs(h);
-        nvs_close(h);
+    if (nvs_open(ns, NVS_READONLY, &h) != ESP_OK) {
+        ESP_LOGW(TAG, "Preset %d: kein NVS-Eintrag gefunden", n);
+        return;
     }
+    load_from_nvs(h);
+    nvs_close(h);
+    ESP_LOGI(TAG, "Preset %d geladen", n);
 }
 
 void storage_save_preset(int n) {
     char ns[16]; snprintf(ns, sizeof(ns), "shelfclock-p%d", n);
     nvs_handle_t h;
-    if (nvs_open(ns, NVS_READWRITE, &h) != ESP_OK) return;
+    if (nvs_open(ns, NVS_READWRITE, &h) != ESP_OK) {
+        ESP_LOGE(TAG, "Preset %d: NVS-Open fehlgeschlagen", n);
+        return;
+    }
     nvs_set_u8(h, "clockMode",      g_config.clock_mode);
     nvs_set_u8(h, "brightness",     g_config.brightness);
     nvs_set_i32(h, "gmtOffset_sec", g_config.gmt_offset_sec);
@@ -207,6 +224,11 @@ void storage_save_preset(int n) {
         nvs_set_u8(h, kb, g_config.b[i]);
     }
     nvs_set_str(h, "scrollText", g_config.scroll_text);
-    nvs_commit(h);
+    esp_err_t err = nvs_commit(h);
     nvs_close(h);
+    if (err == ESP_OK) {
+        ESP_LOGI(TAG, "Preset %d gespeichert (Modus=%d)", n, g_config.clock_mode);
+    } else {
+        ESP_LOGE(TAG, "Preset %d: Commit fehlgeschlagen: %s", n, esp_err_to_name(err));
+    }
 }

@@ -605,6 +605,20 @@ function getspotlightsColorSettings() {
   xhttp.open("GET", "getspotlightsColorSettings", true);
   xhttp.send();
 }
+function getSpotBrightness() {
+  $.get("/getSpotBrightness", function(d) {
+    var el = document.getElementById("spotBrightness");
+    if (el) { el.value = d; document.getElementById("spotBrightnessVal").textContent = d; }
+  });
+}
+function getSpotAnimMode() {
+  $.get("/getSpotAnimMode", function(d) {
+    var el = document.getElementById("spotAnimMode");
+    if (el) el.value = d;
+  });
+}
+function setSpotBrightness(v) { document.getElementById("spotBrightnessVal").textContent = v; $.post("/setSpotBrightness", {spotBrightness: v}); }
+function setSpotAnimMode(v)    { $.post("/setSpotAnimMode",   {spotAnimMode:    v}); }
 
 
 function getscrollFrequency() {
@@ -821,6 +835,8 @@ window.addEventListener("load", myInit, true); function myInit(){
 
 	getspotlightsColor()
 	getspotlightsColorSettings()
+	getSpotBrightness()
+	getSpotAnimMode()
 
 	getscrollFrequency()
 	getscrollOptions1()
@@ -1688,6 +1704,26 @@ function setDateTime() {
 							<input type="radio" id="spotlightsColorSettings3" name="spotlightsColorSettings" value="2"> Cycling Color Wheel
 							<br>
 							<input type="radio" id="spotlightsColorSettings4" name="spotlightsColorSettings" value="3"> Cycle All Colors Slow
+							<br>
+							<br>
+							<strong>Spotlight Brightness:</strong> <span id="spotBrightnessVal">-</span>
+							<br>
+							<div class="slider-wrapper">
+								<label class="float-left">Off</label>
+								<label class="float-right">Max</label>
+								<input type="range" class="form-control-range" id="spotBrightness" min="0" max="255" step="1" oninput="setSpotBrightness(this.value)">
+							</div>
+							<br>
+							<br>
+							<strong>Spotlight Animation:</strong>
+							<br>
+							<select id="spotAnimMode" onchange="setSpotAnimMode(this.value)" style="font-size:1rem;padding:2px 6px;border-radius:6px;">
+								<option value="0">Static (use color setting above)</option>
+								<option value="1">Rainbow</option>
+								<option value="2">Pulse</option>
+								<option value="3">Chase</option>
+								<option value="4">Color Cycle</option>
+							</select>
 						</div>
 					</form>
 				</div>
