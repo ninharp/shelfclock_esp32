@@ -148,6 +148,31 @@ static void main_task(void *arg) {
 
     rtttl_play_song(RTTTL_SONG_SMB);
 
+    /* ── Startup-Animation: grüner Balken einmal durch alle LEDs ── */
+    {
+        static const uint8_t tail_bright[] = { 255, 160, 80, 35, 12 };
+        int total = NUM_LEDS;
+        for (int pos = -4; pos < total + 5; pos++) {
+            xSemaphoreTake(g_led_mutex, portMAX_DELAY);
+            all_blank();
+            for (int k = 0; k < 5; k++) {
+                int idx = pos - k;
+                if (idx >= 0 && idx < total) {
+                    uint8_t b = tail_bright[k];
+                    g_leds[idx] = CRGB(0, b, (uint8_t)(b / 6));
+                }
+            }
+            led_refresh();
+            xSemaphoreGive(g_led_mutex);
+            vTaskDelay(pdMS_TO_TICKS(5));
+        }
+        /* Alles löschen nach Animation */
+        xSemaphoreTake(g_led_mutex, portMAX_DELAY);
+        all_blank();
+        led_refresh();
+        xSemaphoreGive(g_led_mutex);
+    }
+
     bool wish_done_today = false;
 
     while (1) {

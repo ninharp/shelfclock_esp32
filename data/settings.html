@@ -13,8 +13,8 @@
 document.addEventListener('DOMContentLoaded', function() {
   var sel = document.getElementById('spotAnimMode');
   if (sel) {
-    var vals = [5, 6];
-    var labels = ['Sequential Twinkle', 'Firefly'];
+    var vals = [5, 6, 7, 8];
+    var labels = ['Sequential Twinkle', 'Firefly', 'Multi Twinkle', 'Comet'];
     vals.forEach(function(v, i) {
       if (!sel.querySelector('option[value="' + v + '"]')) {
         var o = document.createElement('option');
@@ -641,6 +641,13 @@ function getSpotSpeed() {
   });
 }
 function setSpotSpeed(v)       { $.post("/setSpotSpeed",      {spotSpeed:       v}); }
+function getMicSensitivity() {
+  $.get("/getMicSensitivity", function(d) {
+    var el = document.getElementById("micSensitivity");
+    if (el) { el.value = d; document.getElementById("micSensitivityVal").textContent = d; }
+  });
+}
+function setMicSensitivity(v) { $.post("/setMicSensitivity", {micSensitivity: v}); }
 function getDigitAnimSpeed() {
   $.get("/getDigitAnimSpeed", function(d) {
     var el = document.getElementById("digitAnimSpeed");
@@ -867,6 +874,7 @@ window.addEventListener("load", myInit, true); function myInit(){
 	getSpotBrightness()
 	getSpotAnimMode()
 	getSpotSpeed()
+	getMicSensitivity()
 	getDigitAnimSpeed()
 
 	getscrollFrequency()
@@ -1763,6 +1771,8 @@ function setDateTime() {
 								<option value="4">Color Cycle</option>
 								<option value="5">Sequential Twinkle</option>
 								<option value="6">Firefly</option>
+								<option value="7">Multi Twinkle</option>
+								<option value="8">Comet</option>
 							</select>
 							<br>
 							<strong>Spotlight Speed:</strong>
@@ -2155,6 +2165,15 @@ function setDateTime() {
 							<br>
 							<input type="radio" id="spectrumColorSettings7" name="spectrumColorSettings" value="6"> Cycle All Colors Slow
 						</div>
+						<br>
+						<strong>Microphone Sensitivity:</strong>
+						<br>
+						<input type="range" id="micSensitivity" min="1" max="10" value="6"
+							oninput="document.getElementById('micSensitivityVal').textContent=this.value; setMicSensitivity(this.value)"
+							style="width:160px;">
+						<span id="micSensitivityVal">6</span>
+						<br>
+						<small style="color:#888">1 = sehr unempfindlich &nbsp; 6 = normal &nbsp; 10 = sehr empfindlich</small>
 					</form>
 				</div>
 			</div>

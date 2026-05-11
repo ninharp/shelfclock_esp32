@@ -45,6 +45,7 @@ void storage_defaults(void) {
     g_config.spotlight_anim_mode     = 0;
     g_config.spotlight_speed         = 3;
     g_config.digit_anim_speed        = 3;
+    g_config.mic_sensitivity         = 6;
     g_config.suspend_frequency       = 1;
     g_config.suspend_type            = 0;
     g_config.scoreboard_left         = 0;
@@ -91,6 +92,7 @@ static void load_from_nvs(nvs_handle_t h) {
     if (nvs_get_u8(h,  "spotAnimMode",   &u8)  == ESP_OK) g_config.spotlight_anim_mode = u8;
     if (nvs_get_u8(h,  "spotSpeed",      &u8)  == ESP_OK) g_config.spotlight_speed = u8;
     if (nvs_get_u8(h,  "digitAnimSpeed", &u8)  == ESP_OK) g_config.digit_anim_speed = u8;
+    if (nvs_get_u8(h,  "micSensitivity", &u8)  == ESP_OK) g_config.mic_sensitivity = u8;
     if (nvs_get_u8(h,  "suspendFreq",    &u8)  == ESP_OK) g_config.suspend_frequency = u8;
     if (nvs_get_u8(h,  "suspendType",    &u8)  == ESP_OK) g_config.suspend_type = u8;
     if (nvs_get_u8(h,  "alarmCD",        &u8)  == ESP_OK) g_config.use_audible_alarm = (bool)u8;
@@ -167,6 +169,7 @@ void storage_save_all(void) {
     nvs_set_u8(h,  "spotAnimMode",   g_config.spotlight_anim_mode);
     nvs_set_u8(h,  "spotSpeed",      g_config.spotlight_speed);
     nvs_set_u8(h,  "digitAnimSpeed", g_config.digit_anim_speed);
+    nvs_set_u8(h,  "micSensitivity", g_config.mic_sensitivity);
     nvs_set_u8(h,  "suspendFreq",    g_config.suspend_frequency);
     nvs_set_u8(h,  "suspendType",    g_config.suspend_type);
     nvs_set_u8(h,  "alarmCD",        (uint8_t)g_config.use_audible_alarm);

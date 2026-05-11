@@ -150,6 +150,74 @@ void spotlight_anim_update(void) {
             /* Individuelle Geschwindigkeit: nicht alle gleichzeitig */
             if ((esp_random() & 3) != 0) s6_phase[i]++;
         }
+    } else if (mode == 7) {
+        /* Multi-Twinkle: bis zu 4 LEDs gleichzeitig, jede unabhängig */
+        #define MT_MAX 4
+        static struct {
+            int     led;
+            uint8_t bright;
+            int8_t  dir;    /* 1=ein, 0=halten, -1=aus, -2=inaktiv */
+            uint8_t hold;
+            uint8_t hue;
+        } s7[MT_MAX];
+        static bool s7_inited = false;
+        if (!s7_inited) {
+            for (int k = 0; k < MT_MAX; k++) s7[k].dir = -2;
+            s7_inited = true;
+        }
+
+        for (int i = 0; i < n; i++) g_leds[SEGMENTS_LEDS + i] = CRGB_BLACK;
+
+        for (int k = 0; k < MT_MAX; k++) {
+            if (s7[k].dir == -2) {
+                /* Zufällig entscheiden ob dieses Slot jetzt startet */
+                if ((esp_random() & 7) == 0) {
+                    s7[k].led    = (int)(esp_random() % (uint32_t)n);
+                    s7[k].bright = 0;
+                    s7[k].dir    = 1;
+                    s7[k].hold   = (uint8_t)(5 + (esp_random() & 7));
+                    s7[k].hue    = (uint8_t)(esp_random() & 0xFF);
+                }
+                continue;
+            }
+            if (s7[k].dir == 1) {
+                s7[k].bright = (s7[k].bright > 235) ? 255 : s7[k].bright + 20;
+                if (s7[k].bright == 255) { s7[k].dir = 0; }
+            } else if (s7[k].dir == 0) {
+                if (s7[k].hold > 0) s7[k].hold--;
+                else s7[k].dir = -1;
+            } else {
+                if (s7[k].bright < 20) { s7[k].bright = 0; s7[k].dir = -2; }
+                else s7[k].bright -= 20;
+            }
+            if (s7[k].dir != -2 && s7[k].led >= 0) {
+                g_leds[SEGMENTS_LEDS + s7[k].led] = hsv_to_rgb(s7[k].hue, 255, s7[k].bright);
+            }
+        }
+    } else if (mode == 8) {
+        /* Comet: heller Kopf mit Schweif, prallt an Enden ab */
+        static int     s8_pos   = 0;
+        static int8_t  s8_dir   = 1;
+        static uint8_t s8_hue   = 0;
+
+        for (int i = 0; i < n; i++) {
+            int dist = s8_pos - i;
+            if (dist < 0) dist = -dist;
+            /* Schweif nur hinter Bewegungsrichtung */
+            int trail = (s8_dir > 0) ? (s8_pos - i) : (i - s8_pos);
+            uint8_t v;
+            if      (trail == 0) v = 255;
+            else if (trail == 1) v = 160;
+            else if (trail == 2) v = 80;
+            else if (trail == 3) v = 30;
+            else                 v = 0;
+            g_leds[SEGMENTS_LEDS + i] = (v > 0)
+                ? hsv_to_rgb((s8_hue + i * 8) & 0xFF, 240, v)
+                : CRGB_BLACK;
+        }
+        s8_pos += s8_dir;
+        if (s8_pos >= n - 1) { s8_pos = n - 1; s8_dir = -1; s8_hue += 30; }
+        if (s8_pos <= 0)     { s8_pos = 0;      s8_dir =  1; s8_hue += 30; }
     }
 }
 

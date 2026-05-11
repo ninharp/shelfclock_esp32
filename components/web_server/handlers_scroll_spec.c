@@ -70,6 +70,16 @@ static esp_err_t h_update_scroll_text(httpd_req_t *r) {
     xSemaphoreGive(g_config_mutex); storage_save_all(); SEND_OK(r);
 }
 
+static esp_err_t h_get_mic_sens(httpd_req_t *r)        { SEND_INT(r,g_config.mic_sensitivity); }
+static esp_err_t h_update_mic_sens(httpd_req_t *r) {
+    char buf[8]={0}; get_body_param(r,"micSensitivity",buf,sizeof(buf));
+    uint8_t v=(uint8_t)atoi(buf);
+    if (v<1) v=1;
+    if (v>10) v=10;
+    xSemaphoreTake(g_config_mutex,portMAX_DELAY); g_config.mic_sensitivity=v;
+    xSemaphoreGive(g_config_mutex); storage_save_all(); SEND_OK(r);
+}
+
 static esp_err_t h_get_rand_spec(httpd_req_t *r)      { SEND_INT(r,g_config.random_spectrum_mode); }
 static esp_err_t h_get_spec_color(httpd_req_t *r)     { SEND_HEX(r,g_config.r[15],g_config.g[15],g_config.b[15]); }
 static esp_err_t h_get_spec_bg(httpd_req_t *r)        { SEND_HEX(r,g_config.r[17],g_config.g[17],g_config.b[17]); }
@@ -132,6 +142,8 @@ void register_handlers_scroll_spec(httpd_handle_t s) {
     REG(s,HTTP_POST,"/updatescrollOptions6",      h_update_scroll_opt);
     REG(s,HTTP_POST,"/updatescrollOptions7",      h_update_scroll_opt);
     REG(s,HTTP_POST,"/updatescrollOptions8",      h_update_scroll_opt);
+    REG(s,HTTP_GET, "/getMicSensitivity",                h_get_mic_sens);
+    REG(s,HTTP_POST,"/setMicSensitivity",                h_update_mic_sens);
     REG(s,HTTP_GET, "/getrandomSpectrumMode",           h_get_rand_spec);
     REG(s,HTTP_GET, "/getspectrumColor",                h_get_spec_color);
     REG(s,HTTP_GET, "/getspectrumBackground",           h_get_spec_bg);

@@ -31,7 +31,11 @@ void spectrum_task_fn(void *arg) {
             continue;
         }
         int32_t level = i2s_mic_get_level();
-        int pre = (int)((long)SPECTRUM_PIXELS * (long)(level >> 8)) / 8192;
+        /* sensitivity 1→/2M (sehr unempfindlich), 6→/65K (normal), 10→/4K (sehr empfindlich) */
+        int sens = g_config.mic_sensitivity;
+        if (sens < 1 || sens > 10) sens = 6;
+        int32_t div = 1 << (22 - sens);
+        int pre = (int)((long)SPECTRUM_PIXELS * level / div);
         if (pre > s_react) s_react = pre;
         if (s_react > SPECTRUM_PIXELS) s_react = SPECTRUM_PIXELS;
 

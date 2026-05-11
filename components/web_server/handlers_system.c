@@ -84,7 +84,7 @@ static esp_err_t h_update_spot_brightness(httpd_req_t *r) {
 static esp_err_t h_update_spot_anim(httpd_req_t *r) {
     char buf[8]={0}; get_body_param(r,"spotAnimMode",buf,sizeof(buf));
     uint8_t v=(uint8_t)atoi(buf);
-    if (v>6) v=6;
+    if (v>8) v=8;
     xSemaphoreTake(g_config_mutex,portMAX_DELAY); g_config.spotlight_anim_mode=v;
     xSemaphoreGive(g_config_mutex); storage_save_all(); SEND_OK(r);
 }
