@@ -9,9 +9,16 @@
 #include <stdatomic.h>
 #include <time.h>
 
+extern bool g_digit_anim_active;
+
 int64_t g_countdown_end_us = 0;
 static int64_t s_duration_us = 0;
 static bool s_countdown_ended = false;
+
+static digit_anim_t s_anims[7] = {
+    DIGIT_ANIM_INIT, DIGIT_ANIM_INIT, DIGIT_ANIM_INIT, DIGIT_ANIM_INIT,
+    DIGIT_ANIM_INIT, DIGIT_ANIM_INIT, DIGIT_ANIM_INIT
+};
 
 void mode_countdown_start(int32_t duration_ms) {
     s_duration_us      = (int64_t)duration_ms * 1000;
@@ -60,7 +67,6 @@ void mode_countdown_update(void) {
     if (now_us >= g_countdown_end_us) {
         s_countdown_ended = true;
         g_countdown_end_us = 0;
-        /* "End" auf dem Display anzeigen, kein Mutex-nötiger blocking call */
         display_number(38, 5, CRGB_WHITE);  /* E */
         display_number(79, 3, CRGB_WHITE);  /* n */
         display_number(69, 1, CRGB_WHITE);  /* d */
@@ -77,11 +83,17 @@ void mode_countdown_update(void) {
     uint8_t s1 = rem_sec / 10, s2 = rem_sec % 10;
     crgb_t col = CRGB(g_config.cd_r, g_config.cd_g, g_config.cd_b);
     if (rest_ms <= 10000 && g_config.color_change_cd) col = CRGB_RED;
+    bool any = false;
     if (hours > 0) {
-        display_number(h1, 6, col); display_number(h2, 4, col);
-        display_number(m1, 2, col); display_number(m2, 0, col);
+        any |= display_number_animated(h1, 6, col, &s_anims[6]);
+        any |= display_number_animated(h2, 4, col, &s_anims[4]);
+        any |= display_number_animated(m1, 2, col, &s_anims[2]);
+        any |= display_number_animated(m2, 0, col, &s_anims[0]);
     } else {
-        display_number(m1, 6, col); display_number(m2, 4, col);
-        display_number(s1, 2, col); display_number(s2, 0, col);
+        any |= display_number_animated(m1, 6, col, &s_anims[6]);
+        any |= display_number_animated(m2, 4, col, &s_anims[4]);
+        any |= display_number_animated(s1, 2, col, &s_anims[2]);
+        any |= display_number_animated(s2, 0, col, &s_anims[0]);
     }
+    g_digit_anim_active = any;
 }

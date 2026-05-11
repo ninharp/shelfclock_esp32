@@ -28,6 +28,7 @@ void mode_scroll_overlay(void);    // periodic overlay scroll
 void mode_countdown_start(int32_t duration_ms);
 bool mode_countdown_check_ended(void);
 void mode_stopwatch_start(int32_t duration_ms);
+bool mode_stopwatch_check_ended(void);
 
 void scroll(const char *text);     // directly callable from main_task (e.g. "MAkE A WISH")
 void end_countdown(void);

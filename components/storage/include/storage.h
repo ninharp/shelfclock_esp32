@@ -46,6 +46,8 @@ typedef struct {
     uint8_t  lightshow_speed;       // 1=sehr langsam … 3=normal … 5=sehr schnell
     uint8_t  spotlight_brightness;  // 1-10, 10=Auto
     uint8_t  spotlight_anim_mode;   // 0=static, 1=rainbow, 2=pulse, 3=chase, 4=color-cycle
+    uint8_t  spotlight_speed;       // 1=sehr langsam … 3=normal … 5=sehr schnell
+    uint8_t  digit_anim_speed;      // 1=langsam … 3=normal … 5=schnell
     uint8_t  suspend_frequency;
     uint8_t  suspend_type;
     char     scroll_text[257];

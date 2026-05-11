@@ -93,7 +93,7 @@ void mode_time_update(void) {
     crgb_t mc = (cs == 1 || cs == 3) ? hc : pick_color(cs, 2, true);
 
     int disp_hour = hour;
-    if (g_config.clock_display_type != 1) {
+    if (g_config.clock_display_type != 1 && g_config.clock_display_type != 3) {
         if (disp_hour > 12) disp_hour -= 12;
         if (disp_hour < 1)  disp_hour += 12;
     }

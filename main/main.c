@@ -13,6 +13,7 @@
 #include "storage.h"
 #include "led_display.h"
 extern bool g_digit_anim_active;
+extern int  g_digit_anim_frames;
 #include "sensors.h"
 #include "clock_modes.h"
 #include "lightshow.h"
@@ -237,8 +238,11 @@ static void main_task(void *arg) {
             led_refresh();
             xSemaphoreGive(g_led_mutex);
 
-            /* Countdown-Ende außerhalb des LED-Mutex behandeln */
+            /* Countdown/Stopwatch-Ende außerhalb des LED-Mutex behandeln */
             if (mode == 1 && mode_countdown_check_ended()) {
+                end_countdown();
+            }
+            if (mode == 4 && mode_stopwatch_check_ended()) {
                 end_countdown();
             }
         }
@@ -272,6 +276,11 @@ void app_main(void) {
     storage_init();
     storage_load();
     ESP_LOGI(TAG, "Config loaded, mode=%d", g_config.clock_mode);
+    /* Digit-Animations-Geschwindigkeit aus Config übernehmen */
+    { static const int map[6] = {10, 20, 15, 10, 6, 3};
+      uint8_t s = g_config.digit_anim_speed;
+      if (s < 1 || s > 5) s = 3;
+      g_digit_anim_frames = map[s]; }
 
     led_display_init();
     sensors_init();

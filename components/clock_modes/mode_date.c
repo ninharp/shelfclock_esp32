@@ -30,18 +30,20 @@ void mode_date_update(void) {
 
     switch (g_config.date_display_type) {
     case 0:
-        display_number(m1 < 1 ? 0 : m1, 6, mc);
-        display_number(m2, 4, mc);
-        display_number(d1, 2, dc);
-        display_number(d2, 0, dc);
+        display_number(d1, 6, dc);
+        display_number(d2, 4, dc);
+        display_number(m1 < 1 ? 0 : m1, 2, mc);
+        display_number(m2, 0, mc);
         break;
     case 1:
-        display_number(m1 < 1 ? 10 : m1, 6, mc);
-        display_number(m2, 4, mc);
-        display_number(d1, 2, dc);
-        display_number(d2, 0, dc);
+        display_number(d1 < 1 ? 10 : d1, 6, dc);
+        display_number(d2, 4, dc);
+        display_number(m1 < 1 ? 10 : m1, 2, mc);
+        display_number(m2, 0, mc);
         break;
     case 2:
+        display_number(d1, 5, dc);
+        display_number(d2, 3, dc);
         if (m1 > 0) {
             crgb_t tm = (cs == 4) ? random_color(g_config.pastel_colors) : mc;
             for (int i = 32 * LEDS_PER_SEGMENT; i < 33 * LEDS_PER_SEGMENT; i++) {
@@ -56,9 +58,7 @@ void mode_date_update(void) {
                 if (i < NUM_LEDS) g_leds[i] = CRGB_BLACK;
             }
         }
-        display_number(m2, 5, mc);
-        display_number(d1, 3, dc);
-        display_number(d2, 1, dc);
+        display_number(m2, 1, mc);
         break;
     case 3:
         switch (ti.tm_wday) {
@@ -76,6 +76,8 @@ void mode_date_update(void) {
         else { display_number(d1, 4, dc); display_number(d2, 2, dc); }
         break;
     case 5:
+        display_number(d1, 5, dc);
+        display_number(d2, 3, dc);
         if (m1 > 0) {
             crgb_t tm = (cs == 4) ? random_color(g_config.pastel_colors) : mc;
             for (int i = 32 * LEDS_PER_SEGMENT; i < 33 * LEDS_PER_SEGMENT; i++) {
@@ -90,9 +92,7 @@ void mode_date_update(void) {
                 if (i < NUM_LEDS) g_leds[i] = CRGB_BLACK;
             }
         }
-        display_number(m2, 5, mc);
-        display_number(d1, 2, dc);
-        display_number(d2, 0, dc);
+        display_number(m2, 1, mc);
         for (int i = 20 * LEDS_PER_SEGMENT; i < 21 * LEDS_PER_SEGMENT; i++) {
             if (i < NUM_LEDS) g_leds[i] = sc;
         }

@@ -225,7 +225,8 @@ void set_brightness(uint8_t brightness) {
     (void)brightness;
 }
 
-bool g_digit_anim_active = false;
+bool g_digit_anim_active  = false;
+int  g_digit_anim_frames  = 10;
 
 bool display_number_animated(uint8_t num, int digit_pos, crgb_t color,
                               digit_anim_t *anim) {
@@ -252,7 +253,7 @@ bool display_number_animated(uint8_t num, int digit_pos, crgb_t color,
     uint8_t new_mask = (anim->to   < 97) ? g_numbers[anim->to]   : 0;
 
     /* Fortschritt 0→255 */
-    uint8_t t = (uint8_t)(255 * anim->frame / DIGIT_ANIM_FRAMES);
+    uint8_t t = (uint8_t)(255 * anim->frame / g_digit_anim_frames);
 
     for (int s = 0; s < SEGMENTS_PER_NUMBER; s++) {
         bool old_on = (old_mask >> s) & 1;
@@ -279,7 +280,7 @@ bool display_number_animated(uint8_t num, int digit_pos, crgb_t color,
     }
 
     anim->frame++;
-    if (anim->frame >= DIGIT_ANIM_FRAMES) anim->frame = -1;
+    if (anim->frame >= g_digit_anim_frames) anim->frame = -1;
 
     return (anim->frame >= 0);
 }

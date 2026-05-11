@@ -22,7 +22,7 @@ static esp_err_t h_get_month_color(httpd_req_t *r) { SEND_HEX(r,g_config.r[5],g_
 static esp_err_t h_get_sep_color(httpd_req_t *r)   { SEND_HEX(r,g_config.r[6],g_config.g[6],g_config.b[6]); }
 
 static esp_err_t h_update_date_display_type(httpd_req_t *r) {
-    char buf[8]={0}; get_body_param(r,"dateDisplayType",buf,sizeof(buf));
+    char buf[8]={0}; get_body_param(r,"DateDisplayType",buf,sizeof(buf));
     xSemaphoreTake(g_config_mutex,portMAX_DELAY);
     g_config.date_display_type=atoi(buf);
     xSemaphoreGive(g_config_mutex); storage_save_all(); SEND_OK(r);
@@ -64,17 +64,17 @@ static esp_err_t h_get_type_color(httpd_req_t *r)   { SEND_HEX(r,g_config.r[8],g
 static esp_err_t h_get_degree_color(httpd_req_t *r) { SEND_HEX(r,g_config.r[9],g_config.g[9],g_config.b[9]); }
 
 static esp_err_t h_update_temp_type(httpd_req_t *r) {
-    char buf[8]={0}; get_body_param(r,"temperatureSymbol",buf,sizeof(buf));
+    char buf[8]={0}; get_body_param(r,"TempType",buf,sizeof(buf));
     xSemaphoreTake(g_config_mutex,portMAX_DELAY); g_config.temperature_symbol=atoi(buf);
     xSemaphoreGive(g_config_mutex); storage_save_all(); SEND_OK(r);
 }
 static esp_err_t h_update_temp_correction(httpd_req_t *r) {
-    char buf[8]={0}; get_body_param(r,"temperatureCorrection",buf,sizeof(buf));
+    char buf[8]={0}; get_body_param(r,"CorrectionSelect",buf,sizeof(buf));
     xSemaphoreTake(g_config_mutex,portMAX_DELAY); g_config.temperature_correction=(int8_t)atoi(buf);
     xSemaphoreGive(g_config_mutex); storage_save_all(); SEND_OK(r);
 }
 static esp_err_t h_update_temp_display_type(httpd_req_t *r) {
-    char buf[8]={0}; get_body_param(r,"tempDisplayType",buf,sizeof(buf));
+    char buf[8]={0}; get_body_param(r,"TempDisplayType",buf,sizeof(buf));
     xSemaphoreTake(g_config_mutex,portMAX_DELAY); g_config.temp_display_type=atoi(buf);
     xSemaphoreGive(g_config_mutex); storage_save_all(); SEND_OK(r);
 }
@@ -100,7 +100,7 @@ static esp_err_t h_update_degree_color(httpd_req_t *r) {
     xSemaphoreGive(g_config_mutex); storage_save_all(); SEND_OK(r);
 }
 static esp_err_t h_update_temp_color_settings(httpd_req_t *r) {
-    char buf[8]={0}; get_body_param(r,"tempColorSettings",buf,sizeof(buf));
+    char buf[8]={0}; get_body_param(r,"TempColorSettings",buf,sizeof(buf));
     xSemaphoreTake(g_config_mutex,portMAX_DELAY); g_config.temp_color_settings=atoi(buf);
     xSemaphoreGive(g_config_mutex); storage_save_all(); SEND_OK(r);
 }
@@ -112,7 +112,7 @@ static esp_err_t h_get_symbol_color(httpd_req_t *r)        { SEND_HEX(r,g_config
 static esp_err_t h_get_humi_decimal_color(httpd_req_t *r)  { SEND_HEX(r,g_config.r[12],g_config.g[12],g_config.b[12]); }
 
 static esp_err_t h_update_humi_display_type(httpd_req_t *r) {
-    char buf[8]={0}; get_body_param(r,"humiDisplayType",buf,sizeof(buf));
+    char buf[8]={0}; get_body_param(r,"HumiDisplayType",buf,sizeof(buf));
     xSemaphoreTake(g_config_mutex,portMAX_DELAY); g_config.humi_display_type=atoi(buf);
     xSemaphoreGive(g_config_mutex); storage_save_all(); SEND_OK(r);
 }
@@ -138,7 +138,7 @@ static esp_err_t h_update_humi_decimal_color(httpd_req_t *r) {
     xSemaphoreGive(g_config_mutex); storage_save_all(); SEND_OK(r);
 }
 static esp_err_t h_update_humi_color_settings(httpd_req_t *r) {
-    char buf[8]={0}; get_body_param(r,"humiColorSettings",buf,sizeof(buf));
+    char buf[8]={0}; get_body_param(r,"HumiColorSettings",buf,sizeof(buf));
     xSemaphoreTake(g_config_mutex,portMAX_DELAY); g_config.humi_color_settings=atoi(buf);
     xSemaphoreGive(g_config_mutex); storage_save_all(); SEND_OK(r);
 }

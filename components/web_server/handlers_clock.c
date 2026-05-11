@@ -171,7 +171,7 @@ static esp_err_t h_update_clock_display_type(httpd_req_t *r) {
     xSemaphoreGive(g_config_mutex); storage_save_all(); SEND_OK(r);
 }
 static esp_err_t h_update_colon_type(httpd_req_t *r) {
-    char buf[8]={0}; get_body_param(r,"colonType",buf,sizeof(buf));
+    char buf[8]={0}; get_body_param(r,"ColonType",buf,sizeof(buf));
     xSemaphoreTake(g_config_mutex,portMAX_DELAY);
     g_config.colon_type=atoi(buf);
     xSemaphoreGive(g_config_mutex); storage_save_all(); SEND_OK(r);

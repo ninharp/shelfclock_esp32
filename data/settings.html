@@ -8,7 +8,22 @@
     <script type="text/javascript" src="js/bootstrap.min.js"></script>
     <script type="text/javascript" src="js/moment-with-locales.js"></script>
     <link rel="stylesheet" href="css/bootstrap.min.css">
-<script type="text/javascript">	
+<script type="text/javascript">
+
+document.addEventListener('DOMContentLoaded', function() {
+  var sel = document.getElementById('spotAnimMode');
+  if (sel) {
+    var vals = [5, 6];
+    var labels = ['Sequential Twinkle', 'Firefly'];
+    vals.forEach(function(v, i) {
+      if (!sel.querySelector('option[value="' + v + '"]')) {
+        var o = document.createElement('option');
+        o.value = v; o.textContent = labels[i];
+        sel.appendChild(o);
+      }
+    });
+  }
+});
 
 function getpastelColors() {
   var xhttp = new XMLHttpRequest();
@@ -619,6 +634,20 @@ function getSpotAnimMode() {
 }
 function setSpotBrightness(v) { document.getElementById("spotBrightnessVal").textContent = v; $.post("/setSpotBrightness", {spotBrightness: v}); }
 function setSpotAnimMode(v)    { $.post("/setSpotAnimMode",   {spotAnimMode:    v}); }
+function getSpotSpeed() {
+  $.get("/getSpotSpeed", function(d) {
+    var el = document.getElementById("spotSpeed");
+    if (el) { el.value = d; document.getElementById("spotSpeedVal").textContent = d; }
+  });
+}
+function setSpotSpeed(v)       { $.post("/setSpotSpeed",      {spotSpeed:       v}); }
+function getDigitAnimSpeed() {
+  $.get("/getDigitAnimSpeed", function(d) {
+    var el = document.getElementById("digitAnimSpeed");
+    if (el) { el.value = d; document.getElementById("digitAnimSpeedVal").textContent = d; }
+  });
+}
+function setDigitAnimSpeed(v)  { $.post("/setDigitAnimSpeed", {digitAnimSpeed:  v}); }
 
 
 function getscrollFrequency() {
@@ -837,6 +866,8 @@ window.addEventListener("load", myInit, true); function myInit(){
 	getspotlightsColorSettings()
 	getSpotBrightness()
 	getSpotAnimMode()
+	getSpotSpeed()
+	getDigitAnimSpeed()
 
 	getscrollFrequency()
 	getscrollOptions1()
@@ -1652,6 +1683,13 @@ function setDateTime() {
 								<input type="range" class="form-control-range" id="rangeBrightness" min="10" max="255">
 							</div>
 							<br>
+							<strong>Digit Transition Speed:</strong>
+							<br>
+							<input type="range" id="digitAnimSpeed" min="1" max="5" value="3"
+								oninput="document.getElementById('digitAnimSpeedVal').textContent=this.value; setDigitAnimSpeed(this.value)"
+								style="width:160px;">
+							<span id="digitAnimSpeedVal">3</span>
+							<br>
 							<br>
 							<strong>Suspend Display on Silence:</strong>
 							<br>
@@ -1723,7 +1761,16 @@ function setDateTime() {
 								<option value="2">Pulse</option>
 								<option value="3">Chase</option>
 								<option value="4">Color Cycle</option>
+								<option value="5">Sequential Twinkle</option>
+								<option value="6">Firefly</option>
 							</select>
+							<br>
+							<strong>Spotlight Speed:</strong>
+							<br>
+							<input type="range" id="spotSpeed" min="1" max="5" value="3"
+								oninput="document.getElementById('spotSpeedVal').textContent=this.value; setSpotSpeed(this.value)"
+								style="width:160px;">
+							<span id="spotSpeedVal">3</span>
 						</div>
 					</form>
 				</div>

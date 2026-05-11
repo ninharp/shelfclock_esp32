@@ -1,6 +1,7 @@
 #include "web_server.h"
 #include "storage.h"
 #include "sensors.h"
+#include "led_display.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/semphr.h"
 #include "freertos/task.h"
@@ -29,6 +30,8 @@ static esp_err_t h_get_suspend_type(httpd_req_t *r)    { SEND_INT(r,g_config.sus
 static esp_err_t h_get_suspend_freq(httpd_req_t *r)    { SEND_INT(r,g_config.suspend_frequency); }
 static esp_err_t h_get_spot_brightness(httpd_req_t *r) { SEND_INT(r,g_config.spotlight_brightness); }
 static esp_err_t h_get_spot_anim(httpd_req_t *r)       { SEND_INT(r,g_config.spotlight_anim_mode); }
+static esp_err_t h_get_spot_speed(httpd_req_t *r)       { SEND_INT(r,g_config.spotlight_speed); }
+static esp_err_t h_get_digit_anim_speed(httpd_req_t *r) { SEND_INT(r,g_config.digit_anim_speed); }
 
 static esp_err_t h_update_brightness(httpd_req_t *r) {
     char buf[8]={0}; get_body_param(r,"rangeBrightness",buf,sizeof(buf));
@@ -81,8 +84,28 @@ static esp_err_t h_update_spot_brightness(httpd_req_t *r) {
 static esp_err_t h_update_spot_anim(httpd_req_t *r) {
     char buf[8]={0}; get_body_param(r,"spotAnimMode",buf,sizeof(buf));
     uint8_t v=(uint8_t)atoi(buf);
-    if (v>4) v=4;
+    if (v>6) v=6;
     xSemaphoreTake(g_config_mutex,portMAX_DELAY); g_config.spotlight_anim_mode=v;
+    xSemaphoreGive(g_config_mutex); storage_save_all(); SEND_OK(r);
+}
+static esp_err_t h_update_spot_speed(httpd_req_t *r) {
+    char buf[8]={0}; get_body_param(r,"spotSpeed",buf,sizeof(buf));
+    uint8_t v=(uint8_t)atoi(buf);
+    if (v<1) v=1;
+    if (v>5) v=5;
+    xSemaphoreTake(g_config_mutex,portMAX_DELAY); g_config.spotlight_speed=v;
+    xSemaphoreGive(g_config_mutex); storage_save_all(); SEND_OK(r);
+}
+static esp_err_t h_update_digit_anim_speed(httpd_req_t *r) {
+    char buf[8]={0}; get_body_param(r,"digitAnimSpeed",buf,sizeof(buf));
+    uint8_t v=(uint8_t)atoi(buf);
+    if (v<1) v=1;
+    if (v>5) v=5;
+    /* frames: speed 1=20, 2=15, 3=10, 4=6, 5=3 */
+    static const int map[6] = {10, 20, 15, 10, 6, 3};
+    xSemaphoreTake(g_config_mutex,portMAX_DELAY);
+    g_config.digit_anim_speed=v;
+    g_digit_anim_frames = map[v];
     xSemaphoreGive(g_config_mutex); storage_save_all(); SEND_OK(r);
 }
 
@@ -92,7 +115,8 @@ static void reboot_task(void *arg) {
 }
 
 static esp_err_t h_reboot(httpd_req_t *r) {
-    SEND_OK(r);
+    httpd_resp_set_type(r, "text/json");
+    httpd_resp_sendstr(r, "{\"result\":\"ok\"}");
     xTaskCreate(reboot_task, "reboot", 1024, NULL, 5, NULL);
     return ESP_OK;
 }
@@ -141,8 +165,12 @@ void register_handlers_system(httpd_handle_t s) {
     REG(s,HTTP_POST,"/updatesuspendFrequency",       h_update_suspend_freq);
     REG(s,HTTP_GET, "/getSpotBrightness",            h_get_spot_brightness);
     REG(s,HTTP_GET, "/getSpotAnimMode",              h_get_spot_anim);
+    REG(s,HTTP_GET, "/getSpotSpeed",                 h_get_spot_speed);
+    REG(s,HTTP_GET, "/getDigitAnimSpeed",            h_get_digit_anim_speed);
     REG(s,HTTP_POST,"/setSpotBrightness",            h_update_spot_brightness);
     REG(s,HTTP_POST,"/setSpotAnimMode",              h_update_spot_anim);
+    REG(s,HTTP_POST,"/setSpotSpeed",                 h_update_spot_speed);
+    REG(s,HTTP_POST,"/setDigitAnimSpeed",            h_update_digit_anim_speed);
     REG(s,HTTP_POST,"/reboot",                        h_reboot);
     REG(s,HTTP_GET, "/debugpage",                    h_debugpage);
 }
